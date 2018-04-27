@@ -1,0 +1,10 @@
+{
+	"name": "chant",
+	"description": "A lightweight library to keep data in sync across multiple clients.",
+	"homepage": "https://github.com/minifyre/chant",
+	"license": "MIT",
+	"version": "0.5.0",
+	"devDependencies": {
+		"cherub": "minifyre/cherub"
+	}
+}

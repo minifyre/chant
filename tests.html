@@ -35,6 +35,11 @@ tests.chant=
 		]
 	},
 	{
+		name:'delete',
+		func:()=>chant(initalState).delete('obj.prop').get(),
+		rtn:{obj:{}}
+	},
+	{
 		name:'set',
 		func:()=>chant(initalState).set('obj.prop','value').get('obj.prop'),
 		rtn:'value'

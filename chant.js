@@ -11,18 +11,24 @@ const chant=function(initalVal={})
 		props=util.path2props(path);
 		return clone(props.reduce(traverse,state));
 	};
-	/*self.delete=function(path='')
+	self.delete=function(path='')
 	{
-		const
-		props=path.split('.').filter(util.empty),
-		prop=props.pop();
-		if (prop)
+		let
+		ref=state,
+		props=util.path2props(path),
+		lastIndex=props.length-1;
+		for(let c=0;c<lastIndex;c++)
 		{
-			//delete obj[path.pop()]
+			let prop=props[c];
+			if(!ref[prop])
+			{
+				ref[prop]={};
+			}
+			ref=ref[prop];
 		}
-		//
-		return self;
-	};*/
+		delete ref[props[lastIndex]];
+		return self.sync({'type':'delete',path});
+	};
 	self.set=function(path='',val=undefined)
 	{
 		let
@@ -39,8 +45,7 @@ const chant=function(initalVal={})
 			ref=ref[prop];
 		}
 		ref[props[lastIndex]]=val;
-		//@todo self.sync();
-		return self;
+		return self.sync({type:'set',path,val});
 	};
 	self.update=function(path,func)
 	{
@@ -49,11 +54,11 @@ const chant=function(initalVal={})
 		val=func(util.clone(init));
 		return self.set(path,val);
 	};
-/*
-	self.sync=function()
+	self.sync=function(action)
 	{
+		//@todo send socket
 		return self;
-	};*/
+	};
 	return self;
 },
 util={};

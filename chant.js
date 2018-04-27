@@ -4,6 +4,11 @@ const chant=function(json={})
 	const
 	self={},
 	state=util.clone(json),
+	send=function(action)
+	{
+		//@todo send socket
+		return self;
+	},
 	receive=function(action)
 	{
 		const
@@ -15,7 +20,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return self.sync({'type':'delete',path});
+		return send({'type':'delete',path});
 	};
 	self.get=function(path='')
 	{
@@ -28,12 +33,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return self.sync({type:'set',path,val});
-	};
-	self.sync=function(action)
-	{
-		//@todo send socket
-		return self;
+		return send({type:'set',path,val});
 	};
 	self.update=function(path,func)
 	{

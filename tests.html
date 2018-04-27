@@ -9,6 +9,10 @@ initalState={obj:{prop:'val'}},
 args=
 {
 },
+util=
+{
+	addperiod:txt=>(txt+'.')
+},
 rtn=
 {
 };
@@ -29,10 +33,17 @@ tests.chant=
 				rtn:'val'
 			}
 		]
-
+	},
+	{
+		name:'set',
+		func:()=>chant(initalState).set('obj.prop','value').get('obj.prop'),
+		rtn:'value'
+	},
+	{
+		name:'update',
+		func:()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'),
+		rtn:'val.'
 	}
-	/*
-console.log(chant(initalState).set('obj.prop','value').get('obj.prop')==='value');*/
 ];
 cherub({now:()=>performance.now()})
 .run(

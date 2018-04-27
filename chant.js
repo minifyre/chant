@@ -7,8 +7,8 @@ const chant=function(initalVal={})
 	self.get=function(path='')
 	{
 		const
-		{clone,empty,traverse}=util,
-		props=path.split('.').filter(empty);
+		{clone,traverse}=util,
+		props=util.path2props(path);
 		return clone(props.reduce(traverse,state));
 	};
 	/*self.delete=function(path='')
@@ -22,16 +22,16 @@ const chant=function(initalVal={})
 		}
 		//
 		return self;
-	};
+	};*/
 	self.set=function(path='',val=undefined)
 	{
 		let
 		ref=state,
-		props=path.split('.').filter(util.empty),
+		props=util.path2props(path),
 		lastIndex=props.length-1;
-		for(var c=0;c<lastIndex;c++)
+		for(let c=0;c<lastIndex;c++)
 		{
-			var prop=props[c];
+			let prop=props[c];
 			if(!ref[prop])
 			{
 				ref[prop]={};
@@ -39,30 +39,17 @@ const chant=function(initalVal={})
 			ref=ref[prop];
 		}
 		ref[props[lastIndex]]=val;
-		return self;
-	};*/
-
-	/*self.set=function(path='',val=undefined)//@todo can this act as add(new.prop,val) as well?
-	{
-		//use recursive Object.assign
-		const {arg,args,path,type}=Object.assign(
-		{
-			arg:undefined,
-			path:'',
-			type:chant.clone
-		},action),
-		timestamp=Date.now(),
-		{clone,traverse}=util,
-		props=path.split('.'),
-		val=clone(props.reduce(traverse,state));
-		return self;
-	};*/
-/*	self.update=function()
-	{
-		//get value
-		//set value
+		//@todo self.sync();
 		return self;
 	};
+	self.update=function(path,func)
+	{
+		const
+		init=self.get(path),
+		val=func(util.clone(init));
+		return self.set(path,val);
+	};
+/*
 	self.sync=function()
 	{
 		return self;
@@ -71,15 +58,6 @@ const chant=function(initalVal={})
 },
 util={};
 util.clone=json=>JSON.parse(JSON.stringify(json));
-util.empty=txt=>txt.length;
-util.map=function(initalArr,func)
-{
-	let arr=initalArr.slice();
-	for (let c=0,l=arr.length;c<l;c++)
-	{
-		arr[c]=func(arr[c]);
-	}
-	return arr;
-};
+util.path2props=path=>path.split('.').filter(txt=>txt.length);
 util.traverse=(obj,prop)=>obj[prop];
 export {chant};

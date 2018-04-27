@@ -1,0 +1,43 @@
+<!Doctype html>
+<script type=module>
+'use strict';
+import {cherub} from './node_modules/cherub/cherub.js';
+import {chant} from './chant.js';
+const
+tests={},
+initalState={obj:{prop:'val'}},
+args=
+{
+},
+rtn=
+{
+};
+tests.chant=
+[
+	{
+		name:'get',
+		func:arg=>chant(initalState).get(arg),
+		tests:
+		[
+			{
+				name:'()',
+				rtn:initalState
+			},
+			{
+				name:'(obj.prop)',
+				args:['obj.prop'],
+				rtn:'val'
+			}
+		]
+
+	}
+	/*
+console.log(chant(initalState).set('obj.prop','value').get('obj.prop')==='value');*/
+];
+cherub({now:()=>performance.now()})
+.run(
+{
+	name:'chant',
+	tests:tests.chant
+});
+</script>

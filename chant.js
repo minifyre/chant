@@ -11,13 +11,10 @@ const chant=function(initalVal={})
 		props=util.path2props(path);
 		return clone(props.reduce(traverse,state));
 	};
-	self.delete=function(path='')
+	self.getRef=function(props=[])
 	{
-		let
-		ref=state,
-		props=util.path2props(path),
-		lastIndex=props.length-1;
-		for(let c=0;c<lastIndex;c++)
+		let ref=state;
+		for(let c=0,l=props.length;c<l;c++)
 		{
 			let prop=props[c];
 			if(!ref[prop])
@@ -26,25 +23,24 @@ const chant=function(initalVal={})
 			}
 			ref=ref[prop];
 		}
-		delete ref[props[lastIndex]];
+		return ref;
+	};
+	self.delete=function(path='')
+	{
+		let
+		props=util.path2props(path),
+		[firstProps,lastProps]=util.arrSplit(props,props.length-1),
+		ref=self.getRef(firstProps);
+		delete ref[lastProps];
 		return self.sync({'type':'delete',path});
 	};
 	self.set=function(path='',val=undefined)
 	{
 		let
-		ref=state,
 		props=util.path2props(path),
-		lastIndex=props.length-1;
-		for(let c=0;c<lastIndex;c++)
-		{
-			let prop=props[c];
-			if(!ref[prop])
-			{
-				ref[prop]={};
-			}
-			ref=ref[prop];
-		}
-		ref[props[lastIndex]]=val;
+		[firstProps,lastProps]=util.arrSplit(props,props.length-1),
+		ref=self.getRef(firstProps);
+		ref[lastProps]=val;
 		return self.sync({type:'set',path,val});
 	};
 	self.update=function(path,func)
@@ -62,6 +58,7 @@ const chant=function(initalVal={})
 	return self;
 },
 util={};
+util.arrSplit=(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)];
 util.clone=json=>JSON.parse(JSON.stringify(json));
 util.path2props=path=>path.split('.').filter(txt=>txt.length);
 util.traverse=(obj,prop)=>obj[prop];

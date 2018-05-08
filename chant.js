@@ -1,12 +1,13 @@
 'use strict';
 const chant=function(json={})
 {
+	let handlers=[];
 	const
 	self={},
 	state=util.clone(json),
 	send=function(action)
 	{
-		//@todo send socket
+		//console.log(action);
 		return self;
 	},
 	receive=function(action)
@@ -28,6 +29,27 @@ const chant=function(json={})
 		{clone,path2props,traverse}=util,
 		props=path2props(path);
 		return clone(props.reduce(traverse,state));
+	};
+	self.off=function(...args)
+	{
+		const
+		props='path,type,func'.split(','),
+		query=args.reduce(function(obj,arg,i)
+		{
+			const prop=props[i];
+			obj[prop]=arg;
+			return obj;
+		},{}),
+		func=query=>x=>util.filterMatches(query,x);
+		handlers=handlers.filter(func);
+		return self;
+	};
+	//@arg path=property path, type=action, func=callback
+	self.on=function(path,type,func)
+	{
+		handlers.push({path,type,func});
+		console.log(handlers);
+		return self;
 	};
 	self.set=function(path='',val=undefined)
 	{
@@ -69,6 +91,15 @@ util.getRefParts=function(json={},path='')//@note the last prop will mutate, so 
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
 	return [ref,lastProp];
+};
+util.filterMatches=function(query,result)
+{
+	return Object.keys(query)
+	.some(function(prop)
+	{
+		const [a,b]=[query,result].map(x=>x[prop].toString());
+		return a!==b;
+	});
 };
 util.path2props=path=>path.split('.').filter(txt=>txt.length);
 util.traverse=(obj,prop)=>obj[prop];

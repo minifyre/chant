@@ -5,13 +5,7 @@ const chant=function(json={})
 	const
 	self={},
 	state=util.clone(json),
-	receive=function(action)
-	{
-		const
-		{type,path,val}=action,
-		func=self[type]||(()=>'');//@note blank func protects agains non-existant func
-		func(path,val);
-	};
+	defHandler={func:x=>x,path:'',type:''};
 	self.delete=function(path='')
 	{
 		let [ref,prop]=util.getRefParts(state,path);
@@ -20,12 +14,9 @@ const chant=function(json={})
 	};
 	self.emit=function(action)
 	{
-		const defaults={path:'',type:''};
 		handlers.forEach(function(obj)
 		{
-			const 
-			obj2=Object.assign({},defaults,obj),
-			{path,type,func}=obj2;
+			const {path,type,func}=obj;
 			if (action.path.match(path)&&
 			    action.type.match(type))
 			{
@@ -41,24 +32,19 @@ const chant=function(json={})
 		props=path2props(path);
 		return clone(props.reduce(traverse,state));
 	};
-	self.off=function(...args)
+	self.off=function(handler)
 	{
-		const
-		props='path,type,func'.split(','),
-		query=args.reduce(function(obj,arg,i)
+		const query=Object.assign({},defHandler,handler);
+		handlers=handlers.filter(function(result)
 		{
-			const prop=props[i];
-			obj[prop]=arg;
-			return obj;
-		},{}),
-		func=x=>!util.filterMatches(query,x);
-		handlers=handlers.filter(func);
+			return !Object.keys(query)
+			.some(prop=>query[prop].toString()===result[prop].toString());
+		});
 		return self;
 	};
-	//@arg path=property path, type=action, func=callback
-	self.on=function(path,type,func)
+	self.on=function(handler)//={path:property-path,type:action,func:callback}
 	{
-		handlers.push({path,type,func});
+		handlers.push(Object.assign({},defHandler,handler));
 		return self;
 	};
 	self.set=function(path='',val=undefined)
@@ -74,12 +60,15 @@ const chant=function(json={})
 		val=func(util.clone(init));
 		return self.set(path,val);
 	};
-	//@todo onMessage(receive);
 	return self;
 },
-util={};
-util.arrSplit=(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)];
-util.clone=json=>JSON.parse(JSON.stringify(json));
+util=
+{
+	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
+	clone:json=>JSON.parse(JSON.stringify(json)),
+	path2props:path=>path.split('.').filter(txt=>txt.length),
+	traverse:(obj,prop)=>obj[prop]
+};
 util.getRef=function(ref={},props=[])
 {
 	for(let c=0,l=props.length;c<l;c++)//@note optimized for speed
@@ -93,24 +82,13 @@ util.getRef=function(ref={},props=[])
 	}
 	return ref;
 };
-util.getRefParts=function(json={},path='')//@note the last prop will mutate, so they must be sent separately to be assembled for use
+util.getRefParts=function(json={},path='')
 {
 	let
 	{arrSplit,getRef,path2props}=util,
 	props=path2props(path),
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
-	return [ref,lastProp];
+	return [ref,lastProp];//@note must be sent sepearately as lastProp will mutate
 };
-util.filterMatches=function(query,result)
-{
-	return Object.keys(query)
-	.some(function(prop)
-	{
-		const [a,b]=[query,result].map(x=>x[prop].toString());
-		return a===b;
-	});
-};
-util.path2props=path=>path.split('.').filter(txt=>txt.length);
-util.traverse=(obj,prop)=>obj[prop];
 export {chant};

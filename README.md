@@ -1,2 +1,2 @@
 # chant
-A lightweight library to keep data in sync across multiple clients.
+A lightweight library to centralize state.

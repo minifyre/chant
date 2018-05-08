@@ -15,7 +15,8 @@ util=
 },
 rtn=
 {
-};
+},
+{test}=cherub;
 tests.chant=
 [
 	{
@@ -48,7 +49,31 @@ tests.chant=
 		name:'update',
 		func:()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'),
 		rtn:'val.'
-	}
+	},
+	test('off').func(function()
+	{
+		let
+		state=chant(initalState),
+		sum=0,
+		func=action=>sum+=1;
+		state.on('obj.prop','',func);
+		state.set('obj.prop','val2');
+		state.set('obj.prop','val3');
+		state.off('obj.prop','',func);
+		state.set('obj.prop','val4');
+		return sum;
+	}).rtn(2),
+	test('on').func(function()
+	{
+		let
+		state=chant(initalState),
+		sum=0,
+		func=action=>sum+=1;
+		state.on('obj.prop','',func);
+		state.set('obj.prop','val2');
+		state.set('obj.prop','val3');
+		return sum;
+	}).rtn(2)
 ];
 cherub({now:()=>performance.now()})
 .run(

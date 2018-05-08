@@ -5,11 +5,6 @@ const chant=function(json={})
 	const
 	self={},
 	state=util.clone(json),
-	send=function(action)
-	{
-		//console.log(action);
-		return self;
-	},
 	receive=function(action)
 	{
 		const
@@ -21,7 +16,23 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return send({'type':'delete',path});
+		return self.emit({'type':'delete',path});
+	};
+	self.emit=function(action)
+	{
+		const defaults={path:'',type:''};
+		handlers.forEach(function(obj)
+		{
+			const 
+			obj2=Object.assign({},defaults,obj),
+			{path,type,func}=obj2;
+			if (action.path.match(path)&&
+			    action.type.match(type))
+			{
+				func(action);
+			}
+		});
+		return self;
 	};
 	self.get=function(path='')
 	{
@@ -40,7 +51,7 @@ const chant=function(json={})
 			obj[prop]=arg;
 			return obj;
 		},{}),
-		func=query=>x=>util.filterMatches(query,x);
+		func=x=>!util.filterMatches(query,x);
 		handlers=handlers.filter(func);
 		return self;
 	};
@@ -48,14 +59,13 @@ const chant=function(json={})
 	self.on=function(path,type,func)
 	{
 		handlers.push({path,type,func});
-		console.log(handlers);
 		return self;
 	};
 	self.set=function(path='',val=undefined)
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return send({type:'set',path,val});
+		return self.emit({type:'set',path,val});
 	};
 	self.update=function(path,func)
 	{
@@ -98,7 +108,7 @@ util.filterMatches=function(query,result)
 	.some(function(prop)
 	{
 		const [a,b]=[query,result].map(x=>x[prop].toString());
-		return a!==b;
+		return a===b;
 	});
 };
 util.path2props=path=>path.split('.').filter(txt=>txt.length);

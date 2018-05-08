@@ -14,6 +14,7 @@ const chant=function(json={})
 	};
 	self.emit=function(action)
 	{
+		action=Object.assign({timestamp:Date.now()},action);
 		handlers.forEach(function(obj)
 		{
 			const {path,type,func}=obj;
@@ -34,7 +35,7 @@ const chant=function(json={})
 	};
 	self.off=function(handler)
 	{
-		const query=Object.assign({},defHandler,handler);
+		const query=Object.assign({timestamp:Date.now()},defHandler,handler);
 		handlers=handlers.filter(function(result)
 		{
 			return !Object.keys(query)
@@ -44,7 +45,7 @@ const chant=function(json={})
 	};
 	self.on=function(handler)//={path:property-path,type:action,func:callback}
 	{
-		handlers.push(Object.assign({},defHandler,handler));
+		handlers.push(Object.assign({timestamp:Date.now()},defHandler,handler));
 		return self;
 	};
 	self.set=function(path='',val=undefined)

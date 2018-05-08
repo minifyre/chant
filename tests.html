@@ -6,50 +6,29 @@ import {chant} from './chant.js';
 const
 tests={},
 initalState={obj:{prop:'val'}},
-args=
-{
-},
 util=
 {
 	addperiod:txt=>(txt+'.')
 },
-rtn=
-{
-},
 {test}=cherub;
 tests.chant=
 [
-	{
-		name:'get',
-		func:arg=>chant(initalState).get(arg),
-		tests:
-		[
-			{
-				name:'()',
-				rtn:initalState
-			},
-			{
-				name:'(obj.prop)',
-				args:['obj.prop'],
-				rtn:'val'
-			}
-		]
-	},
-	{
-		name:'delete',
-		func:()=>chant(initalState).delete('obj.prop').get(),
-		rtn:{obj:{}}
-	},
-	{
-		name:'set',
-		func:()=>chant(initalState).set('obj.prop','value').get('obj.prop'),
-		rtn:'value'
-	},
-	{
-		name:'update',
-		func:()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'),
-		rtn:'val.'
-	},
+	test('get')
+		.func(arg=>chant(initalState).get(arg))
+		.tests
+		(
+			test('()').rtn(initalState),
+			test('(obj.prop)').args('obj.prop').rtn('val')
+		),
+	test('delete')
+		.func(()=>chant(initalState).delete('obj.prop').get())
+		.rtn({obj:{}}),
+	test('set')
+		.func(()=>chant(initalState).set('obj.prop','value').get('obj.prop'))
+		.rtn('value'),
+	test('update')
+		.func(()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'))
+		.rtn('val.'),
 	test('off').func(function()
 	{
 		let

@@ -14,22 +14,23 @@ util=
 tests.chant=
 [
 	test('get')
-		.func(arg=>chant(initalState).get(arg))
-		.tests
-		(
-			test('()').rtn(initalState),
-			test('(obj.prop)').args('obj.prop').rtn('val')
-		),
+	.func(arg=>chant(initalState).get(arg))
+	.tests
+	(
+		test('()').rtn(initalState),
+		test('(obj.prop)').args('obj.prop').rtn('val')
+	),
 	test('delete')
-		.func(()=>chant(initalState).delete('obj.prop').get())
-		.rtn({obj:{}}),
+	.func(()=>chant(initalState).delete('obj.prop').get())
+	.rtn({obj:{}}),
 	test('set')
-		.func(()=>chant(initalState).set('obj.prop','value').get('obj.prop'))
-		.rtn('value'),
+	.func(()=>chant(initalState).set('obj.prop','value').get('obj.prop'))
+	.rtn('value'),
 	test('update')
-		.func(()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'))
-		.rtn('val.'),
-	test('off').func(function()
+	.func(()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'))
+	.rtn('val.'),
+	test('off')
+	.func(function()
 	{
 		let
 		state=chant(initalState),
@@ -41,8 +42,10 @@ tests.chant=
 		state.off({path:'obj.prop',func});
 		state.set('obj.prop','val4');
 		return sum;
-	}).rtn(2),
-	test('on').func(function()
+	})
+	.rtn(2),
+	test('on')
+	.func(function()
 	{
 		let
 		state=chant(initalState),
@@ -52,7 +55,8 @@ tests.chant=
 		state.set('obj.prop','val2');
 		state.set('obj.prop','val3');
 		return sum;
-	}).rtn(2)
+	})
+	.rtn(2)
 ];
 cherub({now:()=>performance.now()})
 .run(

@@ -10,7 +10,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return self.emit({'type':'delete',path});
+		return self.emit({'type':'delete',path,id:util.id()});
 	};
 	self.emit=function(action)
 	{
@@ -52,7 +52,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return self.emit({type:'set',path,val});
+		return self.emit({type:'set',path,val,id:util.id()});
 	};
 	self.update=function(path,func)
 	{
@@ -91,5 +91,10 @@ util.getRefParts=function(json={},path='')
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
 	return [ref,lastProp];//@note must be sent sepearately as lastProp will mutate
+};
+util.id=function()//@note uuidv4
+{
+	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>
+	(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 };
 export {chant};

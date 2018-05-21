@@ -4,6 +4,8 @@ const chant=function(json={})
 	let handlers=[];
 	const
 	self={},
+	sockets={},
+	receivedEvts=[],
 	state=util.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
 	self.delete=function(path='')
@@ -61,6 +63,34 @@ const chant=function(json={})
 		val=func(util.clone(init));
 		return self.set(path,val);
 	};
+	self.with=function(address=location.href.split('/')[2])//[protocol,_,addr]
+	{
+		//setup socket
+		const socket=sockets[address]=new WebSocket('ws://'+address);
+		//setup state listener
+		state.on({func:function(action)//{type,path,val}
+		{
+			//don't send duplicate actions back that originated from the server
+			if (receivedEvts.every(id=>id!==action.id))
+			{
+				socket.send(JSON.stringify(action));
+			}
+		}});
+		/*//setup server connection
+		socket.addEventListener('open',function(evt)
+		{
+			socket.send({});//@todo send UUID for client
+			//@todo on close, queue up all emitted events & send the all when connection is re-established
+		});*/
+		//listen for stuff from server & sync state on message
+		socket.addEventListener('message',function(evt)
+		{
+			const {id,type,path,val}=JSON.parse(evt.data);
+			receivedEvts.push(id);//make sure not to send this action back to server
+			state[type](path,val);
+		});
+		return self;
+	};
 	return self;
 },
 util=
@@ -72,7 +102,7 @@ util=
 };
 util.getRef=function(ref={},props=[])
 {
-	for(let c=0,l=props.length;c<l;c++)//@note optimized for speed
+	for(let c=0,l=props.length;c<l;c++)//optimized for speed
 	{
 		let prop=props[c];
 		if(!ref[prop])
@@ -90,9 +120,9 @@ util.getRefParts=function(json={},path='')
 	props=path2props(path),
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
-	return [ref,lastProp];//@note must be sent sepearately as lastProp will mutate
+	return [ref,lastProp];//must be sent sepearately as lastProp will mutate
 };
-util.id=function()//@note uuidv4
+util.id=function()//uuidv4
 {
 	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>
 	(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));

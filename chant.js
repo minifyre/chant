@@ -68,7 +68,7 @@ const chant=function(json={})
 		//setup socket
 		const socket=sockets[address]=new WebSocket('ws://'+address);
 		//setup state listener
-		state.on({func:function(action)//{type,path,val}
+		self.on({func:function(action)//{type,path,val}
 		{
 			//don't send duplicate actions back that originated from the server
 			if (receivedEvts.every(id=>id!==action.id))
@@ -76,18 +76,19 @@ const chant=function(json={})
 				socket.send(JSON.stringify(action));
 			}
 		}});
-		/*//setup server connection
+		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
 			socket.send({});//@todo send UUID for client
 			//@todo on close, queue up all emitted events & send the all when connection is re-established
-		});*/
+		});
 		//listen for stuff from server & sync state on message
 		socket.addEventListener('message',function(evt)
 		{
 			const {id,type,path,val}=JSON.parse(evt.data);
 			receivedEvts.push(id);//make sure not to send this action back to server
-			state[type](path,val);
+			self[type](path,val);
+			console.log('msg received',evt.data);
 		});
 		return self;
 	};

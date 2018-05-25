@@ -6,5 +6,8 @@
 	"version": "0.5.0",
 	"devDependencies": {
 		"cherub": "minifyre/cherub"
+	},
+	"dependencies": {
+		"websocket": "~1.0.26"
 	}
 }

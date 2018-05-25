@@ -79,7 +79,7 @@ const chant=function(json={})
 		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
-			socket.send({});//@todo send UUID for client
+			socket.send(JSON.stringify({type:'get'}));//@todo send UUID for client
 			//@todo on close,queue up all emitted events & send the all when connection is re-established
 		});
 		//listen for stuff from server & sync state on message

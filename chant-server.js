@@ -7,7 +7,6 @@ async function init(httpServer,initalState={})
 	self=chant.chant(initalState),
 	server=new wsServer({autoAcceptConnections:false,httpServer}),
 	originIsAllowed=origin=>true;//@todo +auth logic
-	console.log(server);
 	server.on('request',function(req)
 	{
 		if (!originIsAllowed(req.origin))
@@ -23,14 +22,29 @@ async function init(httpServer,initalState={})
 		{
 			if (msg.type==='utf8')
 			{
-				console.log('Received Message: '+msg.utf8Data);
-				connection.sendUTF(msg.utf8Data);
+				const
+				defaults={type:'',path:'',val:''},
+				obj=JSON.parse(msg.utf8Data),
+				{type,path,val,id}=Object.assign(defaults,obj);
+				if (type==='set')
+				{
+					self[type](path,val);
+				}
+				else if (type==='get')
+				{
+					connection.sendUTF(JSON.stringify({type:'set',path,val:self[type](path)}));
+				}
+				else
+				{
+					connection.sendUTF('{"error":"'+type+' is not a valid type"}');
+				}
+				console.log('msg handled');
 			}
-			else if (msg.type==='binary')
+			/*else if (msg.type==='binary')
 			{
 				console.log('Received Binary Message of '+msg.binaryData.length+' bytes');
 				connection.sendBytes(msg.binaryData);
-			}
+			}*/
 		});
 		connection.on('close',function(reasonCode,desc)
 		{

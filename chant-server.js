@@ -1,5 +1,8 @@
 'use strict';
-const wsServer=require('websocket').server;
+const
+//modules
+crypto=require('crypto'),
+wsServer=require('websocket').server;
 async function init(httpServer,initalState={})
 {
 	const chant=await import('./chant.mjs');
@@ -7,6 +10,12 @@ async function init(httpServer,initalState={})
 	self=chant.chant(initalState),
 	server=new wsServer({autoAcceptConnections:false,httpServer}),
 	originIsAllowed=origin=>true;//@todo +auth logic
+	//needs to be reset up to use node js's crypto lib
+	self.id=function()//uuidv4 (node.js adaptation)
+	{		
+		return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+		.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
+	};
 	server.on('request',function(req)
 	{
 		if (!originIsAllowed(req.origin))

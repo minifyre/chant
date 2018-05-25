@@ -12,7 +12,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return self.emit({'type':'delete',path,id:util.id()});
+		return self.emit({'type':'delete',path,id:self.id()});
 	};
 	self.emit=function(action)
 	{
@@ -54,7 +54,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return self.emit({type:'set',path,val,id:util.id()});
+		return self.emit({type:'set',path,val,id:self.id()});
 	};
 	self.update=function(path,func)
 	{
@@ -92,6 +92,7 @@ const chant=function(json={})
 		});
 		return self;
 	};
+	self.id=util.id;
 	return self;
 },
 util=

@@ -67,6 +67,9 @@ async function init(httpServer,initalState={})
 			return;
 		})
 	});
-	return self;
+	return new Promise(function(pass,fail)
+	{
+		pass(self);
+	});
 };
 module.exports=init;

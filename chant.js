@@ -71,7 +71,6 @@ const chant=function(json={})
 		self.on({path:'public',func:function(action)//{type,path,val}
 		{
 			//don't send duplicate actions back that originated from the server
-			console.log(action,receivedEvts);
 			if (receivedEvts.every(id=>id!==action.id))
 			{
 				socket.send(JSON.stringify(action));
@@ -86,18 +85,11 @@ const chant=function(json={})
 		//listen for stuff from server & sync state on message
 		socket.addEventListener('message',function(evt)
 		{
-			console.log(evt.data);
 			const {id,type,path,val}=JSON.parse(evt.data);
 			receivedEvts.push(id);//make sure not to send this action back to server
-			if (type==='set')
-			{
-				self.set(path,val,id);
-			}
-			else//delete
-			{
-				self.delete(path,id);
-			}
-			console.log('msg received',evt.data,self.get());
+			type==='set'?self.set(path,val,id):
+			type==='delete'?self.delete(path,id):
+			console.error(type+' is not a valid type');
 		});
 		return self;
 	};

@@ -6,11 +6,11 @@ const chant=function(json={})
 	self={},
 	sockets={},
 	receivedEvts=[],
-	state=util.clone(json),
+	state=logic.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
 	self.delete=function(path='',id=self.id())
 	{
-		let [ref,prop]=util.getRefParts(state,path);
+		let [ref,prop]=logic.getRefParts(state,path);
 		delete ref[prop];
 		return self.emit({'type':'delete',path,id});
 	};
@@ -31,7 +31,7 @@ const chant=function(json={})
 	self.get=function(path='')
 	{
 		const
-		{clone,path2props,traverse}=util,
+		{clone,path2props,traverse}=logic,
 		props=path2props(path);
 		return clone(props.reduce(traverse,state));
 	};
@@ -52,7 +52,7 @@ const chant=function(json={})
 	};
 	self.set=function(path='',val=undefined,id=self.id())
 	{
-		let [ref,prop]=util.getRefParts(state,path);
+		let [ref,prop]=logic.getRefParts(state,path);
 		ref[prop]=val;
 		return self.emit({type:'set',path,val,id});
 	};
@@ -60,7 +60,7 @@ const chant=function(json={})
 	{
 		const
 		init=self.get(path),
-		val=func(util.clone(init));
+		val=func(logic.clone(init));
 		return self.set(path,val);
 	};
 	self.with=function(address=location.href.split('/')[2])//[protocol,_,addr]
@@ -93,17 +93,17 @@ const chant=function(json={})
 		});
 		return self;
 	};
-	self.id=util.id;
+	self.id=logic.id;
 	return self;
 },
-util=
+logic=
 {
 	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
 	clone:json=>JSON.parse(JSON.stringify(json)),
 	path2props:path=>path.split('.').filter(txt=>txt.length),
 	traverse:(obj,prop)=>obj[prop]
 };
-util.getRef=function(ref={},props=[])
+logic.getRef=function(ref={},props=[])
 {
 	for(let c=0,l=props.length;c<l;c++)//optimized for speed
 	{
@@ -116,16 +116,16 @@ util.getRef=function(ref={},props=[])
 	}
 	return ref;
 };
-util.getRefParts=function(json={},path='')
+logic.getRefParts=function(json={},path='')
 {
 	let
-	{arrSplit,getRef,path2props}=util,
+	{arrSplit,getRef,path2props}=logic,
 	props=path2props(path),
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
 	return [ref,lastProp];//must be sent sepearately as lastProp will mutate
 };
-util.id=function()//uuidv4
+logic.id=function()//uuidv4
 {
 	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>
 	(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));

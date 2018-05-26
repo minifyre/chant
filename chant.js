@@ -12,7 +12,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return self.emit({'type':'delete',path,id:util.id()});
+		return self.emit({'type':'delete',path,id:self.id()});
 	};
 	self.emit=function(action)
 	{
@@ -54,7 +54,7 @@ const chant=function(json={})
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return self.emit({type:'set',path,val,id:util.id()});
+		return self.emit({type:'set',path,val,id:self.id()});
 	};
 	self.update=function(path,func)
 	{
@@ -66,11 +66,12 @@ const chant=function(json={})
 	self.with=function(address=location.href.split('/')[2])//[protocol,_,addr]
 	{
 		//setup socket
-		const socket=sockets[address]=new WebSocket('ws://'+address);
+		const socket=sockets[address]=new WebSocket('ws://'+address,'echo-protocol');
 		//setup state listener
 		self.on({func:function(action)//{type,path,val}
 		{
 			//don't send duplicate actions back that originated from the server
+			console.log(action,receivedEvts);
 			if (receivedEvts.every(id=>id!==action.id))
 			{
 				socket.send(JSON.stringify(action));
@@ -79,12 +80,13 @@ const chant=function(json={})
 		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
-			socket.send({});//@todo send UUID for client
-			//@todo on close, queue up all emitted events & send the all when connection is re-established
+			socket.send(JSON.stringify({type:'get'}));//@todo send UUID for client
+			//@todo on close,queue up all emitted events & send the all when connection is re-established
 		});
 		//listen for stuff from server & sync state on message
 		socket.addEventListener('message',function(evt)
 		{
+			console.log(evt.data);
 			const {id,type,path,val}=JSON.parse(evt.data);
 			receivedEvts.push(id);//make sure not to send this action back to server
 			self[type](path,val);
@@ -92,6 +94,7 @@ const chant=function(json={})
 		});
 		return self;
 	};
+	self.id=util.id;
 	return self;
 },
 util=

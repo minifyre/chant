@@ -12,7 +12,6 @@ const chant=function(json={})
 	input.msg=function(evt)
 	{
 		const {device,type,path,val}=JSON.parse(evt.data);
-		console.log('msg received',device);
 		type==='set'?self.set(path,val,device):
 		type==='delete'?self.delete(path,device):
 		console.error(type+' is not a valid type');
@@ -61,7 +60,6 @@ const chant=function(json={})
 	};
 	self.set=function(path='',val=undefined,device=deviceId)
 	{
-		console.log(device);
 		let [ref,prop]=logic.getRefParts(state,path);
 		ref[prop]=val;
 		return self.emit({type:'set',path,val,device});
@@ -83,7 +81,6 @@ const chant=function(json={})
 			//don't send duplicate actions back that originated from the server
 			if (action.device===deviceId)
 			{
-				console.log(action);
 				socket.send(JSON.stringify(action));//@todo centeralize msg passing
 			}
 		}});
@@ -101,8 +98,7 @@ const chant=function(json={})
 			};
 			//@todo centeralize msg passing
 			socket.send(JSON.stringify({type:'get',path:'public',device:deviceId}));
-			//@todo on close,queue up all emitted events & send the all when connection is re-established
-			socket.addEventListener('message',console.log);
+			//@todo on close,queue up all emitted events & send the all when connection is re-established?
 			socket.addEventListener('message',setup);//temp func for initial setup
 		});
 		return self;

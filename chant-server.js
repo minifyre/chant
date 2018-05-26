@@ -29,7 +29,6 @@ async function chant(httpServer,initalState={})
 			var connection=req.accept('echo-protocol',req.origin);
 			connection.on('message',function(msg)
 			{
-				console.log('msg received',msg.utf8Data);
 				if (msg.type==='utf8')
 				{
 					const
@@ -65,6 +64,8 @@ async function chant(httpServer,initalState={})
 					}
 				}
 				//@todo +msg.type==='binary' & msg.binaryData
+				console.log(JSON.stringify(self.get(),null,4));
+				console.log('');
 			});
 			connection.on('close',input.disconnect);
 		})

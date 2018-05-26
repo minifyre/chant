@@ -68,7 +68,7 @@ const chant=function(json={})
 		//setup socket
 		const socket=sockets[address]=new WebSocket('ws://'+address,'echo-protocol');
 		//setup state listener
-		self.on({func:function(action)//{type,path,val}
+		self.on({path:'public',func:function(action)//{type,path,val}
 		{
 			//don't send duplicate actions back that originated from the server
 			console.log(action,receivedEvts);
@@ -80,7 +80,7 @@ const chant=function(json={})
 		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
-			socket.send(JSON.stringify({type:'get'}));//@todo send UUID for client
+			socket.send(JSON.stringify({type:'get',path:'public'}));//@todo send UUID for client
 			//@todo on close,queue up all emitted events & send the all when connection is re-established
 		});
 		//listen for stuff from server & sync state on message

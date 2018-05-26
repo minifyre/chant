@@ -29,6 +29,7 @@ async function chant(httpServer,initalState={})
 			var connection=req.accept('echo-protocol',req.origin);
 			connection.on('message',function(msg)
 			{
+				console.log('msg received',msg.utf8Data);
 				if (msg.type==='utf8')
 				{
 					const
@@ -55,7 +56,7 @@ async function chant(httpServer,initalState={})
 							type:'set',
 							path,
 							val:self[type](path),
-							id:self.id()
+							device:''
 						}));
 					}
 					else

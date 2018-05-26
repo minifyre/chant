@@ -23,7 +23,6 @@ async function chant(httpServer,initalState={})
 		.then(function()
 		{
 			var connection=req.accept('echo-protocol',req.origin);
-			console.log((new Date())+' Connection accepted.');
 			connection.on('message',function(msg)
 			{
 				if (msg.type==='utf8')
@@ -34,37 +33,42 @@ async function chant(httpServer,initalState={})
 					{type,path,val,id}=Object.assign(defaults,obj);
 					if (type==='set')
 					{
-						self[type](path,val);
-						//@todo send this action to all clients except the one it came from
+						self.set(path,val);
+						//@todo forward action to all clients except the one it came from
+							//(add event listener & and a from:clientid prop to msg?)
 					}
-					//@todo +delete
+					else if (type==='delete')
+					{
+						self.delete(path);
+						//@todo forward action to all clients except the one it came from
+							//(add event listener & and a from:clientid prop to msg?)
+					}
 					else if (type==='get')
 					{
 						//@todo centeralize msg creation to always use an id
-						connection.sendUTF(JSON.stringify({type:'set',path,val:self[type](path),id:self.id()}));
+						connection.sendUTF(JSON.stringify(
+						{
+							type:'set',
+							path,
+							val:self[type](path),
+							id:self.id()
+						}));
 					}
 					else
 					{
 						connection.sendUTF('{"error":"'+type+' is not a valid type"}');
 					}
-					console.log('msg handled');
 				}
-				/*else if (msg.type==='binary')
-				{
-					console.log('Received Binary Message of '+msg.binaryData.length+' bytes');
-					connection.sendBytes(msg.binaryData);
-				}*/
+				//@todo +msg.type==='binary' & msg.binaryData
 			});
 			connection.on('close',function(reasonCode,desc)
 			{
-				console.log((new Date())+' Peer '+connection.remoteAddress+' disconnected.');
 			});
 		})
 		.catch(function(err)
 		{
 			// Make sure we only accept requests from an allowed origin
 			req.reject();
-			console.log((new Date())+' Connection from origin '+req.origin+' rejected.');
 			return;
 		})
 	});

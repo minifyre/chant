@@ -6,22 +6,21 @@ const chant=function(json={})
 	self={},
 	input={},
 	sockets={},
-	receivedEvts=[],
+	deviceId=logic.id(),
 	state=logic.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
 	input.msg=function(evt)
 	{
-		const {id,type,path,val}=JSON.parse(evt.data);
-		receivedEvts.push(id);//make sure not to send this action back to server
-		type==='set'?self.set(path,val,id):
-		type==='delete'?self.delete(path,id):
+		const {device,type,path,val}=JSON.parse(evt.data);
+		type==='set'?self.set(path,val,device):
+		type==='delete'?self.delete(path,device):
 		console.error(type+' is not a valid type');
 	};
-	self.delete=function(path='',id=self.id())
+	self.delete=function(path='',device=deviceId)
 	{
 		let [ref,prop]=logic.getRefParts(state,path);
 		delete ref[prop];
-		return self.emit({'type':'delete',path,id});
+		return self.emit({'type':'delete',path,device});
 	};
 	self.emit=function(action)
 	{
@@ -59,11 +58,11 @@ const chant=function(json={})
 		handlers.push(Object.assign({},defHandler,handler));
 		return self;
 	};
-	self.set=function(path='',val=undefined,id=self.id())
+	self.set=function(path='',val=undefined,device=deviceId)
 	{
 		let [ref,prop]=logic.getRefParts(state,path);
 		ref[prop]=val;
-		return self.emit({type:'set',path,val,id});
+		return self.emit({type:'set',path,val,device});
 	};
 	self.update=function(path,func)
 	{
@@ -79,28 +78,26 @@ const chant=function(json={})
 		//setup state listener
 		self.on({path:'public',func:function(action)//{type,path,val}
 		{
+			console.log(action);
 			//don't send duplicate actions back that originated from the server
-			if (receivedEvts.every(id=>id!==action.id))
+			if (action.device===deviceId)
 			{
-				action.device=self.get('private.id');
 				socket.send(JSON.stringify(action));//@todo centeralize msg passing
 			}
 		}});
 		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
-			const 
-			id=self.id(),
-			setup=function(evt)
+			const setup=function(evt)
 			{
 				input.msg(evt);
-				self.set('private.id',id);
-				self.set('public.devices.'+id,{});
+				self.set('private.id',deviceId);
+				self.set('public.devices.'+deviceId,{});
 				socket.removeEventListener('message',setup);
 				socket.addEventListener('message',input.msg);
 			};
 			//@todo centeralize msg passing
-			socket.send(JSON.stringify({type:'get',path:'public',device:id}));
+			socket.send(JSON.stringify({type:'get',path:'public',device:deviceId}));
 			//@todo on close,queue up all emitted events & send the all when connection is re-established
 			socket.addEventListener('message',setup);
 		});
@@ -108,7 +105,6 @@ const chant=function(json={})
 		socket.addEventListener('message',input.msg);
 		return self;
 	};
-	self.id=logic.id;
 	return self;
 },
 logic=

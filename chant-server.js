@@ -55,7 +55,7 @@ async function chant(httpServer,initalState={})
 							type:'set',
 							path,
 							val:self[type](path),
-							id:self.id()
+							device:''
 						}));
 					}
 					else
@@ -64,6 +64,8 @@ async function chant(httpServer,initalState={})
 					}
 				}
 				//@todo +msg.type==='binary' & msg.binaryData
+				console.log(JSON.stringify(self.get(),null,4));
+				console.log('');
 			});
 			connection.on('close',input.disconnect);
 		})

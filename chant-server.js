@@ -2,20 +2,21 @@
 const
 //modules
 crypto=require('crypto'),
-wsServer=require('websocket').server;
-async function init(httpServer,initalState={})
+wsServer=require('websocket').server,
+//util
+logic={};
+logic.auth=req=>new Promise((pass,fail)=>pass());//customizable, promise-based auth
+logic.id=function()//uuidv4 (node.js adaptation compatible with the crypto module)
+{		
+	return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+	.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
+};
+async function chant(httpServer,initalState={})
 {
 	const chant=await import('./chant.mjs');
 	const
-	self=chant.chant(initalState),
+	self=Object.assign(chant.chant(initalState),logic),
 	server=new wsServer({autoAcceptConnections:false,httpServer});
-	self.auth=req=>new Promise((pass,fail)=>pass());//customizable, promise-based auth
-	//needs to be reset up to use node js's crypto lib
-	self.id=function()//uuidv4 (node.js adaptation)
-	{		
-		return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-		.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
-	};
 	server.on('request',function(req)
 	{
 		self.auth(req)
@@ -67,9 +68,6 @@ async function init(httpServer,initalState={})
 			return;
 		})
 	});
-	return new Promise(function(pass,fail)
-	{
-		pass(self);
-	});
-};
-module.exports=init;
+	return new Promise((pass,fail)=>pass(self));
+}
+module.exports=chant;

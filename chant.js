@@ -103,6 +103,7 @@ const chant=function(json={})
 		});
 		return self;
 	};
+	self.id=logic.id;
 	return self;
 },
 logic=

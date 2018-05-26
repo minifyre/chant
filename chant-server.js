@@ -41,7 +41,8 @@ async function init(httpServer,initalState={})
 				}
 				else if (type==='get')
 				{
-					connection.sendUTF(JSON.stringify({type:'set',path,val:self[type](path)}));
+					//@todo centeralize msg creation to always use an id
+					connection.sendUTF(JSON.stringify({type:'set',path,val:self[type](path),id:self.id()}));
 				}
 				else
 				{

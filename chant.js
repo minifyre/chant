@@ -5,7 +5,7 @@ const chant=function(json={})
 	const
 	self={},
 	input={},
-	sockets={},
+	sockets={},//this can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
 	deviceId=logic.id(),
 	state=logic.clone(json),
 	defHandler={func:x=>x,path:'',type:''};

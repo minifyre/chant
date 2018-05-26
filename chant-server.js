@@ -4,8 +4,10 @@ const
 crypto=require('crypto'),
 wsServer=require('websocket').server,
 //util
+cache={connections:{}},
 input={},
-logic={};
+logic={},
+output={};
 input.disconnect=function(reasonCode,desc)
 {
 };
@@ -14,6 +16,17 @@ logic.id=function()//uuidv4 (node.js adaptation compatible with the crypto modul
 {		
 	return ([1e7]+-1e3+-4e3+-8e3+-1e11)
 	.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
+};
+output.forwardAction=function(action)
+{
+	const
+	{connections}=cache,
+	{device:from}=action,
+	msg=JSON.stringify(action);
+	Object.keys(connections)//@todo may need to improve perf here
+	.filter(id=>id!==from)
+	.map(id=>cache.connections[id])
+	.forEach(connection=>connection.sendUTF(msg));
 };
 async function chant(httpServer,initalState={})
 {
@@ -34,22 +47,20 @@ async function chant(httpServer,initalState={})
 					const
 					defaults={type:'',path:'',val:''},
 					obj=JSON.parse(msg.utf8Data),
-					{type,path,val,id}=Object.assign(defaults,obj);
+					{type,path,val,device}=Object.assign(defaults,obj);
 					if (type==='set')
 					{
 						self.set(path,val);
-						//@todo forward action to all clients except the one it came from
-							//(add event listener & and a from:clientid prop to msg?)
+						output.forwardAction(obj);//@todo (+evt listener & and a from:clientid prop to msg?)
 					}
 					else if (type==='delete')
 					{
 						self.delete(path);
-						//@todo forward action to all clients except the one it came from
-							//(add event listener & and a from:clientid prop to msg?)
+						output.forwardAction(obj);//@todo (+evt listener & and a from:clientid prop to msg?)
 					}
 					else if (type==='get')
 					{
-						//@todo centeralize msg creation to always use an id
+						cache.connections[device]=connection;
 						connection.sendUTF(JSON.stringify(
 						{
 							type:'set',

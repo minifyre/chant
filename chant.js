@@ -4,10 +4,19 @@ const chant=function(json={})
 	let handlers=[];
 	const
 	self={},
+	input={},
 	sockets={},
 	receivedEvts=[],
 	state=logic.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
+	input.msg=function(evt)
+	{
+		const {id,type,path,val}=JSON.parse(evt.data);
+		receivedEvts.push(id);//make sure not to send this action back to server
+		type==='set'?self.set(path,val,id):
+		type==='delete'?self.delete(path,id):
+		console.error(type+' is not a valid type');
+	};
 	self.delete=function(path='',id=self.id())
 	{
 		let [ref,prop]=logic.getRefParts(state,path);
@@ -37,7 +46,7 @@ const chant=function(json={})
 	};
 	self.off=function(handler)
 	{
-		const query=Object.assign({timestamp:Date.now()},defHandler,handler);
+		const query=Object.assign({},defHandler,handler);
 		handlers=handlers.filter(function(result)
 		{
 			return !Object.keys(query)
@@ -47,7 +56,7 @@ const chant=function(json={})
 	};
 	self.on=function(handler)//={path:property-path,type:action,func:callback}
 	{
-		handlers.push(Object.assign({timestamp:Date.now()},defHandler,handler));
+		handlers.push(Object.assign({},defHandler,handler));
 		return self;
 	};
 	self.set=function(path='',val=undefined,id=self.id())
@@ -73,24 +82,30 @@ const chant=function(json={})
 			//don't send duplicate actions back that originated from the server
 			if (receivedEvts.every(id=>id!==action.id))
 			{
-				socket.send(JSON.stringify(action));
+				action.device=self.get('private.id');
+				socket.send(JSON.stringify(action));//@todo centeralize msg passing
 			}
 		}});
 		//setup server connection
 		socket.addEventListener('open',function(evt)
 		{
-			socket.send(JSON.stringify({type:'get',path:'public'}));//@todo send UUID for client
+			const 
+			id=self.id(),
+			setup=function(evt)
+			{
+				input.msg(evt);
+				self.set('private.id',id);
+				self.set('public.devices.'+id,{});
+				socket.removeEventListener('message',setup);
+				socket.addEventListener('message',input.msg);
+			};
+			//@todo centeralize msg passing
+			socket.send(JSON.stringify({type:'get',path:'public',device:id}));
 			//@todo on close,queue up all emitted events & send the all when connection is re-established
+			socket.addEventListener('message',setup);
 		});
 		//listen for stuff from server & sync state on message
-		socket.addEventListener('message',function(evt)
-		{
-			const {id,type,path,val}=JSON.parse(evt.data);
-			receivedEvts.push(id);//make sure not to send this action back to server
-			type==='set'?self.set(path,val,id):
-			type==='delete'?self.delete(path,id):
-			console.error(type+' is not a valid type');
-		});
+		socket.addEventListener('message',input.msg);
 		return self;
 	};
 	self.id=logic.id;

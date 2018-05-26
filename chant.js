@@ -8,11 +8,11 @@ const chant=function(json={})
 	receivedEvts=[],
 	state=util.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
-	self.delete=function(path='')
+	self.delete=function(path='',id=self.id())
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
-		return self.emit({'type':'delete',path,id:self.id()});
+		return self.emit({'type':'delete',path,id});
 	};
 	self.emit=function(action)
 	{
@@ -50,11 +50,11 @@ const chant=function(json={})
 		handlers.push(Object.assign({timestamp:Date.now()},defHandler,handler));
 		return self;
 	};
-	self.set=function(path='',val=undefined)
+	self.set=function(path='',val=undefined,id=self.id())
 	{
 		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
-		return self.emit({type:'set',path,val,id:self.id()});
+		return self.emit({type:'set',path,val,id});
 	};
 	self.update=function(path,func)
 	{
@@ -89,8 +89,15 @@ const chant=function(json={})
 			console.log(evt.data);
 			const {id,type,path,val}=JSON.parse(evt.data);
 			receivedEvts.push(id);//make sure not to send this action back to server
-			self[type](path,val);
-			console.log('msg received',evt.data);
+			if (type==='set')
+			{
+				self.set(path,val,id);
+			}
+			else//delete
+			{
+				self.delete(path,id);
+			}
+			console.log('msg received',evt.data,self.get());
 		});
 		return self;
 	};

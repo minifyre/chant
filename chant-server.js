@@ -2,27 +2,44 @@
 const
 //modules
 crypto=require('crypto'),
-wsServer=require('websocket').server;
-async function init(httpServer,initalState={})
+wsServer=require('websocket').server,
+//util
+cache={connections:{}},
+input={},
+logic={},
+output={};
+input.disconnect=function(reasonCode,desc)
+{
+};
+logic.auth=req=>new Promise((pass,fail)=>pass(req));//customizable, promise-based auth
+logic.id=function()//uuidv4 (node.js adaptation compatible with the crypto module)
+{		
+	return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+	.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
+};
+output.forwardAction=function(action)
+{
+	const
+	{connections}=cache,
+	{device:from}=action,
+	msg=JSON.stringify(action);
+	Object.keys(connections)//@todo may need to improve perf here
+	.filter(id=>id!==from)
+	.map(id=>cache.connections[id])
+	.forEach(connection=>connection.sendUTF(msg));
+};
+async function chant(httpServer,initalState={})
 {
 	const chant=await import('./chant.mjs');
 	const
-	self=chant.chant(initalState),
+	self=Object.assign(chant.chant(initalState),logic),
 	server=new wsServer({autoAcceptConnections:false,httpServer});
-	self.auth=req=>new Promise((pass,fail)=>pass());//customizable, promise-based auth
-	//needs to be reset up to use node js's crypto lib
-	self.id=function()//uuidv4 (node.js adaptation)
-	{		
-		return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-		.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
-	};
 	server.on('request',function(req)
 	{
 		self.auth(req)
 		.then(function()
 		{
 			var connection=req.accept('echo-protocol',req.origin);
-			console.log((new Date())+' Connection accepted.');
 			connection.on('message',function(msg)
 			{
 				if (msg.type==='utf8')
@@ -30,43 +47,47 @@ async function init(httpServer,initalState={})
 					const
 					defaults={type:'',path:'',val:''},
 					obj=JSON.parse(msg.utf8Data),
-					{type,path,val,id}=Object.assign(defaults,obj);
+					{type,path,val,device}=Object.assign(defaults,obj);
 					if (type==='set')
 					{
-						self[type](path,val);
-						//@todo send this action to all clients except the one it came from
+						self.set(path,val);
+						output.forwardAction(obj);//@todo (+evt listener & and a from:clientid prop to msg?)
+						//@todo +self.on({func:output.forwardAction})
 					}
-					//@todo +delete
+					else if (type==='delete')
+					{
+						self.delete(path);
+						output.forwardAction(obj);//@todo (+evt listener & and a from:clientid prop to msg?)
+					}
 					else if (type==='get')
 					{
-						//@todo centeralize msg creation to always use an id
-						connection.sendUTF(JSON.stringify({type:'set',path,val:self[type](path),id:self.id()}));
+						cache.connections[device]=connection;
+						connection.sendUTF(JSON.stringify(
+						{
+							type:'set',
+							path,
+							val:self[type](path),
+							device:''
+						}));
 					}
 					else
 					{
 						connection.sendUTF('{"error":"'+type+' is not a valid type"}');
 					}
-					console.log('msg handled');
 				}
-				/*else if (msg.type==='binary')
-				{
-					console.log('Received Binary Message of '+msg.binaryData.length+' bytes');
-					connection.sendBytes(msg.binaryData);
-				}*/
+				//@todo +msg.type==='binary' & msg.binaryData
+				console.clear();
+				console.log(JSON.stringify(self.get(),null,4));
 			});
-			connection.on('close',function(reasonCode,desc)
-			{
-				console.log((new Date())+' Peer '+connection.remoteAddress+' disconnected.');
-			});
+			connection.on('close',input.disconnect);
 		})
 		.catch(function(err)
 		{
 			// Make sure we only accept requests from an allowed origin
 			req.reject();
-			console.log((new Date())+' Connection from origin '+req.origin+' rejected.');
 			return;
-		})
+		});
 	});
-	return self;
-};
-module.exports=init;
+	return new Promise((pass,fail)=>pass(self));
+}
+module.exports=chant;

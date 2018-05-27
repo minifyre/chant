@@ -84,24 +84,27 @@ const chant=function(json={})
 				socket.send(JSON.stringify(action));//@todo centeralize msg passing
 			}
 		}});
-		//setup server connection
-		socket.addEventListener('open',function(evt)
+		return new Promise(function(pass,fail)
 		{
-			const setup=function(evt)
+			//setup server connection
+			socket.addEventListener('open',function(evt)
 			{
-				input.msg(evt);//sync inital server data with client
-				self.set('private.id',deviceId);
-				self.set('public.devices.'+deviceId,{});
-				socket.removeEventListener('message',setup);
-				//listen for stuff from server & sync state on message
-				socket.addEventListener('message',input.msg);
-			};
-			//@todo centeralize msg passing
-			socket.send(JSON.stringify({type:'get',path:'public',device:deviceId}));
-			//@todo on close,queue up all emitted events & send the all when connection is re-established?
-			socket.addEventListener('message',setup);//temp func for initial setup
+				const setup=function(evt)
+				{
+					input.msg(evt);//sync inital server data with client
+					self.set('private.id',deviceId);
+					self.set('public.devices.'+deviceId,{});
+					socket.removeEventListener('message',setup);
+					//listen for stuff from server & sync state on message
+					socket.addEventListener('message',input.msg);
+					pass(self);
+				};
+				//@todo centeralize msg passing
+				socket.send(JSON.stringify({type:'get',path:'public',device:deviceId}));
+				//@todo on close,queue up all emitted events & send the all when connection is re-established?
+				socket.addEventListener('message',setup);//temp func for initial setup
+			});
 		});
-		return self;
 	};
 	self.id=logic.id;
 	return self;

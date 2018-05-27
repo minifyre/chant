@@ -52,6 +52,7 @@ async function chant(httpServer,initalState={})
 					{
 						self.set(path,val);
 						output.forwardAction(obj);//@todo (+evt listener & and a from:clientid prop to msg?)
+						//@todo +self.on({func:output.forwardAction})
 					}
 					else if (type==='delete')
 					{

@@ -49,7 +49,7 @@ const chant=function(json={})
 		handlers=handlers.filter(function(result)
 		{
 			return !Object.keys(query)
-			.some(prop=>query[prop].toString()===result[prop].toString());
+			.every(prop=>query[prop].toString()===result[prop].toString());
 		});
 		return self;
 	};
@@ -76,7 +76,7 @@ const chant=function(json={})
 		//setup socket
 		const socket=sockets[address]=new WebSocket('ws://'+address,'echo-protocol');
 		//setup state listener
-		self.on({path:'public',func:function(action)//{type,path,val}
+		self.on({path:'public',type:'set',func:function(action)//{type,path,val}
 		{
 			//don't send duplicate actions back that originated from the server
 			if (action.device===deviceId)

@@ -76,8 +76,8 @@ async function chant(httpServer,initalState={})
 					}
 				}
 				//@todo +msg.type==='binary' & msg.binaryData
+				console.clear();
 				console.log(JSON.stringify(self.get(),null,4));
-				console.log('');
 			});
 			connection.on('close',input.disconnect);
 		})

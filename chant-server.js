@@ -33,14 +33,13 @@ async function chant(httpServer,initalState={})
 	server=new wsServer({autoAcceptConnections:false,httpServer});
 	self.auth=logic.auth;
 	self.id=logic.id;
-	output.disconnector=function(connection)
+	output.disconnector=function(connectionId)
 	{
 		return function(reasonCode,desc)
 		{
-			const {id}=connection;
-			delete cache.connections[id];
+			delete cache.connections[connectionId];
 			//@todo delete associated tabs
-			console.clear();			console.log(JSON.stringify(self.delete('public.devices.'+id).get(),null,4));
+			console.clear();			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
 		};
 	};
 	server.on('request',function(req)
@@ -71,7 +70,7 @@ async function chant(httpServer,initalState={})
 					else if (type==='get')
 					{
 						cache.connections[device]=connection;
-						connection.id=device;
+						connection.on('close',output.disconnector(device));
 						connection.sendUTF(JSON.stringify(
 						{
 							type:'set',
@@ -89,7 +88,6 @@ async function chant(httpServer,initalState={})
 				console.clear();
 				console.log(JSON.stringify(self.get(),null,4));
 			});
-			connection.on('close',output.disconnector(connection));
 		})
 		.catch(function(err)
 		{

@@ -8,9 +8,6 @@ cache={connections:{}},
 input={},
 logic={},
 output={};
-input.disconnect=function(reasonCode,desc)
-{
-};
 logic.auth=req=>new Promise((pass,fail)=>pass(req));//customizable, promise-based auth
 logic.id=function()//uuidv4 (node.js adaptation compatible with the crypto module)
 {		
@@ -32,8 +29,19 @@ async function chant(httpServer,initalState={})
 {
 	const chant=await import('./chant.mjs');
 	const
-	self=Object.assign(chant.chant(initalState),logic),
+	self=chant.chant(initalState,logic.id()),
 	server=new wsServer({autoAcceptConnections:false,httpServer});
+	self.auth=logic.auth;
+	self.id=logic.id;
+	output.disconnector=function(connectionId)
+	{
+		return function(reasonCode,desc)
+		{
+			delete cache.connections[connectionId];
+			//@todo delete associated tabs
+			console.clear();			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
+		};
+	};
 	server.on('request',function(req)
 	{
 		self.auth(req)
@@ -62,6 +70,7 @@ async function chant(httpServer,initalState={})
 					else if (type==='get')
 					{
 						cache.connections[device]=connection;
+						connection.on('close',output.disconnector(device));
 						connection.sendUTF(JSON.stringify(
 						{
 							type:'set',
@@ -79,7 +88,6 @@ async function chant(httpServer,initalState={})
 				console.clear();
 				console.log(JSON.stringify(self.get(),null,4));
 			});
-			connection.on('close',input.disconnect);
 		})
 		.catch(function(err)
 		{

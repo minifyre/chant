@@ -1,12 +1,19 @@
 'use strict';
-const chant=function(json={})
+const
+logic=
+{
+	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
+	clone:json=>JSON.parse(JSON.stringify(json)),
+	path2props:path=>path.split('.').filter(txt=>txt.length),
+	traverse:(obj,prop)=>obj[prop]
+},
+chant=function(json={},deviceId=logic.id())
 {
 	let handlers=[];
 	const
 	self={},
 	input={},
 	sockets={},//this can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
-	deviceId=logic.id(),
 	state=logic.clone(json),
 	defHandler={func:x=>x,path:'',type:''};
 	input.msg=function(evt)
@@ -108,13 +115,6 @@ const chant=function(json={})
 	};
 	self.id=logic.id;
 	return self;
-},
-logic=
-{
-	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
-	clone:json=>JSON.parse(JSON.stringify(json)),
-	path2props:path=>path.split('.').filter(txt=>txt.length),
-	traverse:(obj,prop)=>obj[prop]
 };
 logic.getRef=function(ref={},props=[])
 {

@@ -4,10 +4,13 @@ logic=
 {
 	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
 	clone:json=>JSON.parse(JSON.stringify(json)),
-	path2props:path=>path.split('.').filter(txt=>txt.length),
+	path2props:function(path,separator='.')
+	{
+		return path.split(separator).filter(txt=>txt.length);
+	},
 	traverse:(obj,prop)=>obj[prop]
 },
-chant=function(json={},deviceId=logic.id())
+chant=function(json={},opts={})
 {
 	let handlers=[];
 	const
@@ -15,7 +18,9 @@ chant=function(json={},deviceId=logic.id())
 	input={},
 	sockets={},//this can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
 	state=logic.clone(json),
-	defHandler={func:x=>x,path:'',type:''};
+	defHandler={func:x=>x,path:'',type:''},
+	defaults={id:logic.id(),separator:'.'},
+	{id:deviceId,separator}=Object.assign(defaults,opts);
 	input.msg=function(evt)
 	{
 		const {device,type,path,val}=JSON.parse(evt.data);
@@ -25,7 +30,7 @@ chant=function(json={},deviceId=logic.id())
 	};
 	self.delete=function(path='',device=deviceId)
 	{
-		let [ref,prop]=logic.getRefParts(state,path);
+		let [ref,prop]=logic.getRefParts(state,path,separator);
 		delete ref[prop];
 		return self.emit({'type':'delete',path,device});
 	};
@@ -47,7 +52,7 @@ chant=function(json={},deviceId=logic.id())
 	{
 		const
 		{clone,path2props,traverse}=logic,
-		props=path2props(path);
+		props=path2props(path,separator);
 		return clone(props.reduce(traverse,state));
 	};
 	self.off=function(handler)
@@ -67,7 +72,7 @@ chant=function(json={},deviceId=logic.id())
 	};
 	self.set=function(path='',val=undefined,device=deviceId)
 	{
-		let [ref,prop]=logic.getRefParts(state,path);
+		let [ref,prop]=logic.getRefParts(state,path,separator);
 		ref[prop]=val;
 		return self.emit({type:'set',path,val,device});
 	};
@@ -118,7 +123,7 @@ chant=function(json={},deviceId=logic.id())
 };
 logic.getRef=function(ref={},props=[])
 {
-	for(let c=0,l=props.length;c<l;c++)//optimized for speed
+	for(let c=0,l=props.length;c<l;c++)//@note optimized for speed
 	{
 		let prop=props[c];
 		if(!ref[prop])
@@ -129,11 +134,11 @@ logic.getRef=function(ref={},props=[])
 	}
 	return ref;
 };
-logic.getRefParts=function(json={},path='')
+logic.getRefParts=function(json={},path='',separator='.')
 {
 	let
 	{arrSplit,getRef,path2props}=logic,
-	props=path2props(path),
+	props=path2props(path,separator),
 	[firstProps,lastProp]=arrSplit(props,props.length-1),
 	ref=getRef(json,firstProps);
 	return [ref,lastProp];//must be sent sepearately as lastProp will mutate

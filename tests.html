@@ -56,7 +56,10 @@ tests.chant=
 		state.set('obj.prop','val3');
 		return sum;
 	})
-	.rtn(2)
+	.rtn(2),
+	test('separator')
+	.func(()=>chant(initalState,{separator:'/'}).get('obj/prop'))
+	.rtn('val')
 ];
 cherub({now:()=>performance.now()})
 .run(

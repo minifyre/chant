@@ -25,11 +25,12 @@ output.forwardAction=function(action)
 	.map(id=>cache.connections[id])
 	.forEach(connection=>connection.sendUTF(msg));
 };
-async function chant(httpServer,initalState={})
+async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 {
 	const chant=await import('./chant.mjs');
 	const
-	self=chant.chant(initalState,logic.id()),
+	defaults={id:logic.id(),separator:'.'},
+	self=chant.chant(initalState,Object.assign(defaults,opts)),
 	server=new wsServer({autoAcceptConnections:false,httpServer});
 	self.auth=logic.auth;
 	self.id=logic.id;
@@ -39,7 +40,8 @@ async function chant(httpServer,initalState={})
 		{
 			delete cache.connections[connectionId];
 			//@todo delete associated tabs
-			console.clear();			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
+			console.clear();
+			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
 		};
 	};
 	server.on('request',function(req)

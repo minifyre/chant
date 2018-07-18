@@ -3,18 +3,12 @@ const
 //modules
 crypto=require('crypto'),
 wsServer=require('websocket').server,
-//util
+//silo
 cache={connections:{}},
 input={},
 logic={},
 output={};
 logic.auth=req=>new Promise((pass,fail)=>pass(req));//customizable, promise-based auth
-logic.id=function()//uuidv4 (node.js adaptation compatible with the crypto module)
-{		
-	return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-	.replace(/[018]/g,c=>(c^crypto.randomBytes(1)[0]&15>>c/4).toString(16));
-};
-//node code util.rand=()=>crypto.randomBytes(1);
 output.forwardAction=function(action)
 {
 	const
@@ -28,13 +22,15 @@ output.forwardAction=function(action)
 };
 async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 {
-	const chant=await import('./chant.mjs');
+	const {chant}=await import('./chant.mjs');
+	const {util}=await import('./chant.util.mjs');
 	const
-	defaults={id:logic.id(),separator:'.'},
+	defaults={id:util.id(),separator:'.'},
 	self=chant.chant(initalState,Object.assign(defaults,opts)),
 	server=new wsServer({autoAcceptConnections:false,httpServer});
+	util.rand=()=>crypto.randomBytes(1);//node crypto differs from browser crypto
 	self.auth=logic.auth;
-	self.id=logic.id;
+	self.id=util.id;
 	output.disconnector=function(connectionId)
 	{
 		return function(reasonCode,desc)

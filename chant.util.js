@@ -7,4 +7,17 @@ const util=
 	objMaker:defaultObj=>(opts={})=>Object.assign(defaultObj,opts),
 	rand:()=>crypto.getRandomValues(new Uint8Array(1))
 };
+util.getRef=function(ref={},props=[])
+{
+	for(let c=0,l=props.length;c<l;c++)//@note optimized for speed
+	{
+		let prop=props[c];
+		if(!ref[prop])
+		{
+			ref[prop]={};
+		}
+		ref=ref[prop];
+	}
+	return ref;
+};
 export {util};

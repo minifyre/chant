@@ -2,48 +2,64 @@
 <script type=module>
 'use strict';
 import {cherub} from './node_modules/cherub/cherub.js';
-import {chant} from './chant.js';
+import {chant,chant2} from './chant.js';
+import {util} from './chant.util.js';
 const
 tests={},
 initalState={obj:{prop:'val'}},
-util=
-{
-	addperiod:txt=>(txt+'.')
-},
+setup=()=>chant2(initalState),
 {test}=cherub;
 tests.chant=
 [
 	test('get')
-	.func(arg=>chant(initalState).get(arg))
 	.tests
 	(
-		test('()').rtn(initalState),
-		test('(obj.prop)').args('obj.prop').rtn('val')
+		test('()').func(setup).rtn(initalState),
+		test('obj.prop').func(()=>util.clone(setup().obj.prop)).rtn('val')
 	),
 	test('delete')
-	.func(()=>chant(initalState).delete('obj.prop').get())
+	.func(function()
+	{
+		const state=setup();
+		delete state.obj.prop;
+		return state;
+	})
 	.rtn({obj:{}}),
 	test('set')
-	.func(()=>chant(initalState).set('obj.prop','value').get('obj.prop'))
+	.func(function()
+	{
+		const state=setup();
+		state.obj.prop='value';
+		return state.obj.prop;
+	})
 	.rtn('value'),
 	test('update')
-	.func(()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'))
+	.func(function()
+	{
+		const state=setup();
+		state.obj.prop+='.';
+		return state.obj.prop;
+	})
 	.rtn('val.'),
 	test('off')
 	.func(function()
 	{
 		let
-		state=chant(initalState),
+		state=setup(),
 		sum=0,
-		func=action=>sum+=1;
-		state.on({path:'obj.prop',func});
-		state.set('obj.prop','val2');
-		state.set('obj.prop','val3');
-		state.off({path:'obj.prop',func});
-		state.set('obj.prop','val4');
+		obj=
+		{
+			path:['obj','prop'],
+			func:action=>sum+=1
+		};
+		state.on(obj);
+		state.obj.prop='val2';
+		state.obj.prop='val3';
+		state.off(obj);
+		state.obj.prop='val4';
 		return sum;
 	})
-	.rtn(2),
+	.rtn(2)/*,
 	test('on')
 	.func(function()
 	{
@@ -59,7 +75,7 @@ tests.chant=
 	.rtn(2),
 	test('separator')
 	.func(()=>chant(initalState,{separator:'/'}).get('obj/prop'))
-	.rtn('val')
+	.rtn('val')*/
 ];
 cherub({now:()=>performance.now()})
 .run(

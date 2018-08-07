@@ -1,17 +1,6 @@
 'use strict';
 import {util} from './chant.util.js';
-import {chant2} from './chant2.js';
 const
-logic=
-{
-	arrSplit:(arr=[],i=arr.length)=>[arr.slice(0,i),arr.slice(i)],
-	clone:json=>JSON.parse(JSON.stringify(json)),
-	path2props:function(path,separator='.')
-	{
-		return path.split(separator).filter(txt=>txt.length);
-	},
-	traverse:(obj,prop)=>obj[prop]
-},
 chant=function(json={},opts={})
 {
 	let handlers=[];
@@ -19,9 +8,9 @@ chant=function(json={},opts={})
 	self={},
 	input={},
 	sockets={},//this can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
-	state=logic.clone(json),
+	state=util.clone(json),
 	defHandler={func:x=>x,path:'',type:''},
-	defaults={id:logic.id(),separator:'.'},
+	defaults={id:util.id(),separator:'.'},
 	{id:deviceId,separator}=Object.assign(defaults,opts);
 	input.msg=function(evt)
 	{
@@ -32,7 +21,7 @@ chant=function(json={},opts={})
 	};
 	self.delete=function(path='',device=deviceId)
 	{
-		let [ref,prop]=logic.getRefParts(state,path,separator);
+		let [ref,prop]=util.getRefParts(state,path,separator);
 		delete ref[prop];
 		return self.emit({'type':'delete',path,device});
 	};
@@ -53,7 +42,7 @@ chant=function(json={},opts={})
 	self.get=function(path='')
 	{
 		const
-		{clone,path2props,traverse}=logic,
+		{clone,path2props,traverse}=util,
 		props=path2props(path,separator);
 		return clone(props.reduce(traverse,state));
 	};
@@ -74,7 +63,7 @@ chant=function(json={},opts={})
 	};
 	self.set=function(path='',val=undefined,device=deviceId)
 	{
-		let [ref,prop]=logic.getRefParts(state,path,separator);
+		let [ref,prop]=util.getRefParts(state,path,separator);
 		ref[prop]=val;
 		return self.emit({type:'set',path,val,device});
 	};
@@ -82,7 +71,7 @@ chant=function(json={},opts={})
 	{
 		const
 		init=self.get(path),
-		val=func(logic.clone(init));
+		val=func(util.clone(init));
 		return self.set(path,val);
 	};
 	self.with=function(address=location.href.split('/')[2])//[protocol,_,addr]
@@ -120,34 +109,7 @@ chant=function(json={},opts={})
 			});
 		});
 	};
-	self.id=logic.id;
+	self.id=util.id;
 	return self;
 };
-logic.getRef=function(ref={},props=[])
-{
-	for(let c=0,l=props.length;c<l;c++)//@note optimized for speed
-	{
-		let prop=props[c];
-		if(!ref[prop])
-		{
-			ref[prop]={};
-		}
-		ref=ref[prop];
-	}
-	return ref;
-};
-logic.getRefParts=function(json={},path='',separator='.')
-{
-	let
-	{arrSplit,getRef,path2props}=logic,
-	props=path2props(path,separator),
-	[firstProps,lastProp]=arrSplit(props,props.length-1),
-	ref=getRef(json,firstProps);
-	return [ref,lastProp];//must be sent sepearately as lastProp will mutate
-};
-logic.id=function()//uuidv4
-{
-	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>
-	(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
-};
-export {chant,chant2};
+export {chant};

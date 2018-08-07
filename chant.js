@@ -1,18 +1,14 @@
 'use strict';
 import {util} from './chant.util.js';
-const
-chant=function(json={},opts={})
+const chant=function(json={},opts={})
 {
 	let handlers=[];
 	const
 	self={},
-	input={},
-	sockets={},//this can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
+	sockets={},//can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
 	state=util.clone(json),
-	defHandler={func:x=>x,path:'',type:''},
-	defaults={id:util.id(),separator:'.'},
-	{id:deviceId,separator}=Object.assign(defaults,opts);
-	input.msg=function(evt)
+	{id:deviceId,separator}=Object.assign({id:util.id(),separator:'.'},opts),
+	acceptMsg=function(evt)
 	{
 		const {device,type,path,val}=JSON.parse(evt.data);
 		type==='set'?self.set(path,val,device):
@@ -23,7 +19,7 @@ chant=function(json={},opts={})
 	{
 		let [ref,prop]=util.getRefParts(state,path,separator);
 		delete ref[prop];
-		return self.emit({'type':'delete',path,device});
+		return self.emit({type:'delete',path,device});
 	};
 	self.emit=function(action)
 	{
@@ -44,11 +40,11 @@ chant=function(json={},opts={})
 		const
 		{clone,path2props,traverse}=util,
 		props=path2props(path,separator);
-		return clone(props.reduce(traverse,state));
+		return clone(props.reduce(traverse,state));//@todo use refs instead for perf?
 	};
 	self.off=function(handler)
 	{
-		const query=Object.assign({},defHandler,handler);
+		const query=util.mkHandler(handler);
 		handlers=handlers.filter(function(result)
 		{
 			return !Object.keys(query)
@@ -58,7 +54,7 @@ chant=function(json={},opts={})
 	};
 	self.on=function(handler)//={path:property-path,type:action,func:callback}
 	{
-		handlers.push(Object.assign({},defHandler,handler));
+		handlers.push(util.mkHandler(handler));
 		return self;
 	};
 	self.set=function(path='',val=undefined,device=deviceId)
@@ -74,7 +70,7 @@ chant=function(json={},opts={})
 		val=func(util.clone(init));
 		return self.set(path,val);
 	};
-	self.with=function(address=location.href.split('/')[2])//[protocol,_,addr]
+	self.with=function(address=util.getAddress())
 	{
 		//setup socket
 		const socket=sockets[address]=new WebSocket('ws://'+address,'echo-protocol');
@@ -94,12 +90,12 @@ chant=function(json={},opts={})
 			{
 				const setup=function(evt)
 				{
-					input.msg(evt);//sync inital server data with client
+					acceptMsg(evt);//sync inital server data with client
 					self.set('private.id',deviceId);
 					self.set('public.devices.'+deviceId,{});
 					socket.removeEventListener('message',setup);
 					//listen for stuff from server & sync state on message
-					socket.addEventListener('message',input.msg);
+					socket.addEventListener('message',acceptMsg);
 					pass(self);
 				};
 				//@todo centeralize msg passing
@@ -109,7 +105,6 @@ chant=function(json={},opts={})
 			});
 		});
 	};
-	self.id=util.id;
-	return self;
+	return Object.assign(self,{id:util.id});
 };
 export {chant};

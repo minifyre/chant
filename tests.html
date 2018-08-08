@@ -3,13 +3,12 @@
 'use strict';
 import {cherub} from './node_modules/cherub/cherub.js';
 import {chant} from './chant.js';
+import {util} from './chant.util.js';
 const
 tests={},
 initalState={obj:{prop:'val'}},
-util=
-{
-	addperiod:txt=>(txt+'.')
-},
+setup=()=>chant(initalState),
+addperiod=txt=>(txt+'.'),
 {test}=cherub;
 tests.chant=
 [
@@ -27,7 +26,7 @@ tests.chant=
 	.func(()=>chant(initalState).set('obj.prop','value').get('obj.prop'))
 	.rtn('value'),
 	test('update')
-	.func(()=>chant(initalState).update('obj.prop',util.addperiod).get('obj.prop'))
+	.func(()=>chant(initalState).update('obj.prop',addperiod).get('obj.prop'))
 	.rtn('val.'),
 	test('off')
 	.func(function()
@@ -67,5 +66,5 @@ cherub({now:()=>performance.now()})
 	name:'chant',
 	tests:tests.chant
 });
-chant({greeting:'hi'}).with();
+//chant({greeting:'hi'}).with();
 </script>

@@ -105,6 +105,9 @@ const chant=function(json={},opts={})
 			});
 		});
 	};
+	//object properties
+	'entries,keys,values'.split(',')
+	.forEach(key=>self[key]=(path='')=>Object[key](self.get(path)));
 	return Object.assign(self,{id:util.id});
 };
 export {chant};

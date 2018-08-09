@@ -105,6 +105,14 @@ const chant=function(json={},opts={})
 			});
 		});
 	};
+	//array properties
+	'every,find,findIndex,forEach,includes,indexOf,join,lastIndexOf,map,reduce,some'
+	.split(',')
+	.forEach(function(key)
+	{
+		self[key]=(path,...args)=>self.get(path||'')[key](...args);
+	});
+	//@todo add custom array props: push pop splice
 	//object properties
 	'entries,keys,values'.split(',')
 	.forEach(key=>self[key]=(path='')=>Object[key](self.get(path)));

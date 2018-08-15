@@ -7,7 +7,7 @@ const chant=function(json={},opts={})
 	self={},
 	sockets={},//can be used to sync with multiple clients (aka multiplayer games with identical installations of the program)
 	state=util.clone(json),
-	{id:deviceId,separator}=Object.assign({id:util.id(),separator:'.'},opts),
+	{id:deviceId}=Object.assign({id:util.id()},opts),
 	acceptMsg=function(evt)
 	{
 		const {device,type,path,val}=JSON.parse(evt.data);
@@ -17,7 +17,7 @@ const chant=function(json={},opts={})
 	};
 	self.delete=function(path='',device=deviceId)
 	{
-		let [ref,prop]=util.getRefParts(state,path,separator);
+		let [ref,prop]=util.getRefParts(state,path);
 		delete ref[prop];
 		return self.emit({type:'delete',path,device});
 	};
@@ -39,7 +39,7 @@ const chant=function(json={},opts={})
 	{
 		const
 		{clone,path2props,traverse}=util,
-		props=path2props(path,separator);
+		props=path2props(path);
 		return clone(props.reduce(traverse,state));//@todo use refs instead for perf?
 	};
 	self.off=function(handler)
@@ -59,7 +59,7 @@ const chant=function(json={},opts={})
 	};
 	self.set=function(path='',val=undefined,device=deviceId)
 	{
-		let [ref,prop]=util.getRefParts(state,path,separator);
+		let [ref,prop]=util.getRefParts(state,path);
 		ref[prop]=val;
 		return self.emit({type:'set',path,val,device});
 	};
@@ -111,7 +111,7 @@ const chant=function(json={},opts={})
 	.split(',')
 	.forEach(function(key)
 	{
-		self[key]=(path,...args)=>self.get(path||'')[key](...args);
+		self[key]=(path,...args)=>self.get(path)[key](...args);
 	});
 	self.push=function(...args)
 	{

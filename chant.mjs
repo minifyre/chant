@@ -1,5 +1,5 @@
 'use strict';
-import {util} from './chant.util.js';
+import {util} from './chant.util.mjs';
 const chant=function(json={},opts={})
 {
 	let handlers=[];

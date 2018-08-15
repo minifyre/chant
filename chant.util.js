@@ -15,6 +15,17 @@ const util=
 	traverse:(obj,prop)=>obj[prop]
 };
 util.mkHandler=util.mk({func:x=>x,path:'',type:''});
+util.getDeviceName=function(agent=navigator.userAgent)
+{
+	const
+	devices=/Android|iPhone|iPod|iPad|Mac|Linux|Windows/i,
+	browsers=/Opera|Chrome|Safari|Firefox|Edge/i;
+	return [devices,browsers]
+	.map(exp=>agent.match(exp))
+	.filter(x=>!!x)//filter nulls
+	.map(arr=>arr[0])//flatten arr
+	.join('-')||'unknown';
+};
 util.getRef=function(ref={},props=[])
 {
 	for (let c=0,l=props.length;c<l;c++)//@note optimized for speed

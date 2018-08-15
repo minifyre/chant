@@ -90,9 +90,10 @@ const chant=function(json={},opts={})
 			{
 				const setup=function(evt)
 				{
+					const name=util.getDeviceName();
 					acceptMsg(evt);//sync inital server data with client
 					self.set('private.id',deviceId);
-					self.set('public.devices.'+deviceId,{});
+					self.set('public.devices.'+deviceId,{id:deviceId,name});
 					socket.removeEventListener('message',setup);
 					//listen for stuff from server & sync state on message
 					socket.addEventListener('message',acceptMsg);

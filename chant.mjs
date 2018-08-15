@@ -109,10 +109,7 @@ const chant=function(json={},opts={})
 	//array properties
 	'every,find,findIndex,forEach,includes,indexOf,join,lastIndexOf,map,reduce,some'
 	.split(',')
-	.forEach(function(key)
-	{
-		self[key]=(path,...args)=>self.get(path)[key](...args);
-	});
+	.forEach(key=>self[key]=(path,...args)=>self.get(path)[key](...args));
 	self.push=function(...args)
 	{
 		const

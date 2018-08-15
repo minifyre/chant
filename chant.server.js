@@ -2,7 +2,6 @@
 const
 //modules
 crypto=require('crypto'),
-importHack=require('./importHack.js'),
 wsServer=require('websocket').server,
 //silo
 cache={connections:{}},
@@ -29,7 +28,9 @@ output.promise=function(promise)
 };
 async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 {
-	const {chant,util}=await importHack('../node_modules/chant/');
+	const
+	{chant}=await import('./chant.mjs'),
+	{util}=await import('./chant.util.mjs');
 	util.rand=()=>crypto.randomBytes(1);//node crypto differs from browser crypto
 	const
 	defaults={id:util.id(),separator:'.'},

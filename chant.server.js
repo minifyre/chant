@@ -7,8 +7,8 @@ wsServer=require('websocket').server,
 cache={connections:{}},
 logic={},
 output={};
-//customizable, promise-based auth @todo add a better default
-logic.auth=req=>new Promise((pass,fail)=>pass(req));
+//customizable, promise-based auth 
+logic.auth=req=>new Promise((pass,fail)=>pass(req));//@todo add better default
 output.forwardAction=function(action)
 {
 	const
@@ -43,13 +43,14 @@ async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 	};
 	self.auth=logic.auth;
 	self.id=util.id;
-	output.disconnector=function(connectionId)
+	output.disconnector=function(device)
 	{
-		return function(reasonCode,desc)
+		return function()
 		{
-			delete cache.connections[connectionId];
-			console.clear();
-			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
+			const path='public.devices.'+device;
+			delete cache.connections[device];
+			self.delete(path);
+			output.forwardAction({type:'delete',path,device});
 			showState();
 		};
 	};

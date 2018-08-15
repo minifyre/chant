@@ -112,7 +112,22 @@ const chant=function(json={},opts={})
 	{
 		self[key]=(path,...args)=>self.get(path||'')[key](...args);
 	});
-	//@todo add custom array props: push pop splice
+	self.push=function(...args)
+	{
+		const
+		[path,...vals]=args,
+		prefix=(path||''),
+		{length}=self.get(prefix);
+		vals.forEach((val,i)=>self.set(prefix+'.'+(length+i),val));
+		return length+vals.length;
+	};
+	self.pop=function(path='')
+	{
+		const {length}=self.get(path);
+		self.delete(path+'.'+(length-1));
+		return self;
+	};
+	//@todo add custom array props: splice
 	//object properties
 	'entries,keys,values'.split(',')
 	.forEach(key=>self[key]=(path='')=>Object[key](self.get(path)));

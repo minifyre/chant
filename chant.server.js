@@ -35,7 +35,12 @@ async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 	const
 	defaults={id:util.id(),separator:'.'},
 	self=chant(initalState,Object.assign(defaults,opts)),
-	server=new wsServer({autoAcceptConnections:false,httpServer});
+	server=new wsServer({autoAcceptConnections:false,httpServer}),
+	showState=function()
+	{
+		console.clear();
+		console.log(JSON.stringify(self.get(),null,4));
+	};
 	self.auth=logic.auth;
 	self.id=util.id;
 	output.disconnector=function(connectionId)
@@ -45,6 +50,7 @@ async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 			delete cache.connections[connectionId];
 			console.clear();
 			console.log(JSON.stringify(self.delete('public.devices.'+connectionId).get(),null,4));
+			showState();
 		};
 	};
 	server.on('request',async function(req)
@@ -93,8 +99,7 @@ async function chant(httpServer,initalState={},opts={})//@todo integrate opts
 				}
 			}
 			//@todo +msg.type==='binary' & msg.binaryData
-			console.clear();
-			console.log(JSON.stringify(self.get(),null,4));
+			showState();
 		});
 	});
 	return self;

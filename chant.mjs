@@ -28,7 +28,7 @@ const chant=function(json={},opts={})
 		{
 			const {path,type,func}=obj;
 			if (action.path.match(path)&&
-			    action.type.match(type))
+				action.type.match(type))
 			{
 				func(action);
 			}
@@ -92,7 +92,7 @@ const chant=function(json={},opts={})
 				{
 					const name=util.getDeviceName();
 					acceptMsg(evt);//sync inital server data with client
-					self.set('private.id',deviceId);
+					self.set('private.device',deviceId);
 					self.set('public.devices.'+deviceId,{id:deviceId,name});
 					socket.removeEventListener('message',setup);
 					//listen for stuff from server & sync state on message

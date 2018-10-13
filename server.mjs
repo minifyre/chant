@@ -4,60 +4,43 @@ import truth from './node_modules/truth/index.mjs'
 export default async function chant(state,httpServer)
 {
 	const
-	connections={},
+	cons={},
 	write=truth(state,chant.forward),
 	server=websocket.server({autoAcceptConnections:false,httpServer})
 
-	return server.on('request',evt=>chant.req(evt,connections,write))
+	return server.on('request',evt=>chant.req(evt,cons,write))
 }
 //@todo Make sure to only accept requests from an allowed origin
 chant.auth=async req=>true
 //@tood forward actions to other clients?
-chant.disconnect=(from,connections)=>delete connections[from]
-chant.forward=function(act,cons)
+chant.disconnect=(from,cons)=>delete cons[from]
+chant.forward=function(act,cons)//@todo handle get requests
 {
 	const msg=JSON.stringify(act)
 
 	Object
 	.entries(cons)
 	.filter(([id])=>id!==act.from)
-	.forEach(([_,con])=>con.sendUTF(msg))
+	.forEach(([_,con])=>chant.send(con,msg))
 }
 chant.msg=function(evt,state)
 {
 	if (evt.type!=='utf8') return//@todo +type==='binary' & msg.binaryData
 
-	const
-	defaults={type:'',path:[],val:''},
-	obj=JSON.parse(evt.utf8Data),
-	{from,type,path,val}=Object.assign(defaults,obj),
-	[props,props]=truth.zipList(path,path.length-1),
-	ref=truth.ref(state,path)
+	const act=JSON.parse(evt.utf8Data)
 
-	if (type==='set')
-	{
-		ref[prop]=val
-		chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
-		//@todo +self.on({func:chant.forward})
-	}
-	else if (type==='delete')
-	{
-		delete ref[prop]
-		//@todo delete state.deveices[uuid or IP (multiple windows could equal multiple devices with identical IPS)]
-		chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
-	}
-	else if (type==='get')
+	if(act.type==='get'&&!act.path.length)
 	{
 		cons[from]=con
 		con.on('close',chant.disconect(from))
-		con.sendUTF(JSON.stringify({from,path,type:'set',val:self[type](path),}))
+		chant.send(con,{from,path,type:'set',val:self[type](path)})
 	}
-	else con.sendUTF(`{"error":${type} is not a valid type"}`)
+	else truth.inject(state,act)
 }
-chant.req=async function({accept,origin,reject:rej},connections,state)
+chant.req=async function({accept,origin:from,reject:rej},cons,state)
 {
-	const {err}=await chant.auth(evt)
-	if(err) return rej()
-	const con=connections[origin]=accept('echo-protocol',origin)
+	if(await chant.auth(evt)) return rej()
+	const con=cons[from]=accept('echo-protocol',from)
 	con.on('message',evt=>chant.msg(evt,state))
 }
+chant.send=(con,msg)=>con.sendUTF(JSON.stringify(msg))

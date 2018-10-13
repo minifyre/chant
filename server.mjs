@@ -5,14 +5,14 @@ export default async function chant(state,httpServer)
 {
 	const
 	cons={},
-	write=truth(state,chant.forward),
+	{state:write}=truth(state,chant.forward),
 	server=websocket.server({autoAcceptConnections:false,httpServer})
 
 	return server.on('request',evt=>chant.req(evt,cons,write))
 }
 //@todo Make sure to only accept requests from an allowed origin
 chant.auth=async req=>true
-//@tood forward actions to other clients?
+//@todo forward actions to other clients?
 chant.disconnect=(from,cons)=>delete cons[from]
 chant.forward=function(act,cons)//@todo handle get requests
 {
@@ -37,10 +37,10 @@ chant.msg=function(evt,state)
 	}
 	else truth.inject(state,act)
 }
-chant.req=async function({accept,origin:from,reject:rej},cons,state)
+chant.req=async function({accept,origin,reject},cons,state)
 {
-	if(await chant.auth(evt)) return rej()
-	const con=cons[from]=accept('echo-protocol',from)
+	if(await chant.auth(evt)) return reject()
+	const con=cons[origin]=accept('echo-protocol',origin)
 	con.on('message',evt=>chant.msg(evt,state))
 }
 chant.send=(con,msg)=>con.sendUTF(JSON.stringify(msg))

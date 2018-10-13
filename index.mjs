@@ -1,6 +1,6 @@
 export default function chant(updater,from=chant.address())
 {
-	const {error,send}=await new Promise(function(res,rej)
+	const {err,send}=await new Promise(function(res,rej)
 	{
 		const
 		socket=chant.socket(from),
@@ -14,16 +14,16 @@ export default function chant(updater,from=chant.address())
 			send(`{"type":"get"}`)
 			res({send})
 		}
-		socket.onerror=error=>rej({error})
+		socket.onerror=err=>rej({err})
 	})
-	if(error) return console.error(error)
 
-	return function(act)
+	return err?chant.error(err):function(act)
 	{
 		if(act.from!==from) send(JSON.stringify(act))
 		return act
 	}
 }
 chant.address=(url=location.href)=>url.split('/')[2]//[protocol,_,address]
+chant.error=console.error
 chant.socket=addr=>new WebSocket('ws://'+addr,'echo-protocol')
 chant.truth=truth

@@ -3,7 +3,8 @@ export default function chant(state={},addr=chant.address())
 {
 	const
 	socket=new WebSocket('ws://'+addr,'echo-protocol'),
-	{addEventListener:on,removeEventListener:off,send}=socket
+	{addEventListener:on,removeEventListener:off,send}=socket,
+	sync=x=>send(JSON.stringify(x))
 
 	await new Promise(function(res,rej)
 	{
@@ -12,21 +13,20 @@ export default function chant(state={},addr=chant.address())
 			off('open',connect)
 			off('error',rej)
 			on('error',console.error)
-			on('message',function evt2act({data,origin:from})
+			on('message',function({data,origin:from})
 			{
 				truth.inject(state,Object.assign(JSON.parse(data),{from}))
 			})
-			send(`{"type":"get"}`)
+			sync({type:'get'})
 			res()
 		})
 		on('error',rej)
 	})
 
-	return function act2evt(act)
+	return function(act)
 	{
-		const {from,path,type,value}=act
-		if(from===addr) return act
-		send(JSON.stringify(act))
-	}	
+		if(act.from!==addr) sync(act)
+		return act
+	}
 }
 chant.address=(url=location.href)=>url.split('/')[2]//[protocol,_,address]

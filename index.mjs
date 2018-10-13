@@ -19,7 +19,7 @@ export default function chant(updater,from=chant.address())
 		})
 	})
 
-	return send instanceof Error?chant.error(err):function(act)
+	return send instanceof Error?chant.error(send):function(act)
 	{
 		if(act.from!==from) send(JSON.stringify(act))
 		return act

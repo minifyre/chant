@@ -8,6 +8,7 @@
 		"cherub": "minifyre/cherub"
 	},
 	"dependencies": {
+		"truth": "minifyre/truth",
 		"websocket": "~1.0.26"
 	}
 }

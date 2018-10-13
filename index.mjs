@@ -1,10 +1,7 @@
 import truth from './node_modules/truth/index.mjs'
 export default function chant(state={},addr=chant.address())
 {
-	const
-	socket=new WebSocket('ws://'+addr,'echo-protocol'),
-	{addEventListener:on,removeEventListener:off,send}=socket,
-	sync=x=>send(JSON.stringify(x))
+	const {addEventListener:on,removeEventListener:off,send}=chant.socket(addr)
 
 	await new Promise(function(res,rej)
 	{
@@ -17,7 +14,7 @@ export default function chant(state={},addr=chant.address())
 			{
 				truth.inject(state,Object.assign(JSON.parse(data),{from}))
 			})
-			sync({type:'get'})
+			send(`{"type":"get"}`)
 			res()
 		})
 		on('error',rej)
@@ -25,8 +22,9 @@ export default function chant(state={},addr=chant.address())
 
 	return function(act)
 	{
-		if(act.from!==addr) sync(act)
+		if(act.from!==addr) send(JSON.stringify(act))
 		return act
 	}
 }
 chant.address=(url=location.href)=>url.split('/')[2]//[protocol,_,address]
+chant.socket=addr=>new WebSocket('ws://'+addr,'echo-protocol')

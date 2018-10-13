@@ -1,18 +1,16 @@
 const {assign}=Object
 export default function chant(updater,from=chant.address())
 {
-	const send=await new Promise(function(res,onerror)
+	const
+	onmessage=({data})=>updater(assign(JSON.parse(data),{from})),
+	send=await new Promise(function(res,onerror)
 	{
 		assign(chant.socket(from),
 		{
 			onerror,
 			onopen:function({target})
 			{
-				const {send}=assign(target,
-				{
-					onerror:chant.error,
-					onmessage:({data})=>updater(assign(JSON.parse(data),{from}))
-				})
+				const {send}=assign(target,{onerror:chant.error,onmessage})
 				send(`{"type":"get"}`)//@todo if(type==='get'&&!path.length) set all
 				res({send})
 			}

@@ -10,13 +10,6 @@ export default async function chant(state,httpServer)
 
 	return server.on('request',evt=>chant.req(evt,connections,write))
 }
-chant.req=async function({accept,origin,reject:rej},connections,state)
-{
-	const {err}=await chant.auth(evt)
-	if(err) return rej()
-	const con=connections[origin]=accept('echo-protocol',origin)
-	con.on('message',evt=>chant.msg(evt,state))
-}
 //@todo Make sure to only accept requests from an allowed origin
 chant.auth=async req=>true
 //@tood forward actions to other clients?
@@ -60,4 +53,11 @@ chant.msg=function(evt,state)
 		con.sendUTF(JSON.stringify({from,path,type:'set',val:self[type](path),}))
 	}
 	else con.sendUTF(`{"error":${type} is not a valid type"}`)
+}
+chant.req=async function({accept,origin,reject:rej},connections,state)
+{
+	const {err}=await chant.auth(evt)
+	if(err) return rej()
+	const con=connections[origin]=accept('echo-protocol',origin)
+	con.on('message',evt=>chant.msg(evt,state))
 }

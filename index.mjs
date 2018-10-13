@@ -3,18 +3,19 @@ export default function chant(updater,from=chant.address())
 {
 	const
 	onmessage=({data})=>updater(assign(JSON.parse(data),{from})),
-	send=await new Promise(function(res,onerror)
-	{
-		function onopen({target})
-		{
-			const {send}=assign(target,{onerror:chant.error,onmessage})
-			send(`{"type":"get"}`)//@todo if(type==='get'&&!path.length) set all
-			res({send})
-		}
-		assign(chant.socket(from),{onerror,onopen})
+	send=await new Promise(function(res,rej)
+	{//@todo simplify with promise chain or async compose function?
+		const
+		onerror=chant.error,
+		onopen=({target})=>res(assign(target,{onerror,onmessage}).send)
+
+		assign(chant.socket(from),{onerror:rej,onopen})
 	})
 
-	return send instanceof Error?chant.error(send):function(act)
+	if(send instanceof Error) return send
+
+	send(`{"type":"get"}`)
+	return function(act)
 	{
 		if(act.from!==from) send(JSON.stringify(act))
 		return act

@@ -5,76 +5,59 @@ export default async function chant(state,httpServer)
 {
 	const
 	connections={},
-	write=truth(state,forwardActions)
+	write=truth(state,chant.forward),
+	server=websocket.server({autoAcceptConnections:false,httpServer})
 
-	return websocket
-	.server({autoAcceptConnections:false,httpServer})
-	.on('request',evt=>chant.evt2act(evt,connections,write))
+	return server.on('request',evt=>chant.req(evt,connections,write))
 }
-
-
-chant.evt2act=async function({accept,origin,reject:rej},cons,state)
+chant.req=async function({accept,origin,reject:rej},connections,state)
 {
-	//@todo Make sure to only accept requests from an allowed origin
 	const {err}=await chant.auth(evt)
 	if(err) return rej()
-	const con=cons[origin]=accept('echo-protocol',origin)
+	const con=connections[origin]=accept('echo-protocol',origin)
 	con.on('message',evt=>chant.msg(evt,state))
 }
+//@todo Make sure to only accept requests from an allowed origin
 chant.auth=async req=>true
-chant.disconnect=function(from,cons)
-{
-	delete cons[from]
-	//chant.forward({type:'del',path,device})
-}
+//@tood forward actions to other clients?
+chant.disconnect=(from,connections)=>delete connections[from]
 chant.forward=function(act,cons)
 {
-	const
-	{from}=act,
-	msg=JSON.stringify(act)
-	Object.entries(cons)
-	.forEach(([id,con])=>id!==from&&con.sendUTF(msg))
+	const msg=JSON.stringify(act)
+
+	Object
+	.entries(cons)
+	.filter(([id])=>id!==act.from)
+	.forEach(([_,con])=>con.sendUTF(msg))
 }
 chant.msg=function(evt,state)
 {
-	if (evt.type==='utf8')
-	{
-		const
-		defaults={type:'',path:'',val:''},
-		obj=JSON.parse(evt.utf8Data),
-		{type,path,val}=Object.assign(defaults,obj),
-		[props,props]=truth.zipList(path,path.length-1),
-		ref=truth.ref(state,path)
+	if (evt.type!=='utf8') return//@todo +type==='binary' & msg.binaryData
 
-		if (type==='set')
-		{
-			ref[prop]=val
-			chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
-			//@todo +self.on({func:chant.forward})
-		}
-		else if (type==='delete')
-		{
-			delete ref[prop]
-			//@todo delete state.deveices[uuid or IP (multiple windows could equal multiple devices with identical IPS)]
-			chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
-		}
-		else if (type==='get')
-		{
-			cons[device]=con
-			con.on('close',chant.disconect(device))
-			con.sendUTF(JSON.stringify(
-			{
-				type:'set',
-				path,
-				val:self[type](path),
-				device:''
-			}))
-		}
-		else
-		{
-			con.sendUTF(`{"error":${type} is not a valid type"}`)
-		}
+	const
+	defaults={type:'',path:[],val:''},
+	obj=JSON.parse(evt.utf8Data),
+	{from,type,path,val}=Object.assign(defaults,obj),
+	[props,props]=truth.zipList(path,path.length-1),
+	ref=truth.ref(state,path)
+
+	if (type==='set')
+	{
+		ref[prop]=val
+		chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
+		//@todo +self.on({func:chant.forward})
 	}
-	//@todo +msg.type==='binary' & msg.binaryData
-	chant.log(state)
+	else if (type==='delete')
+	{
+		delete ref[prop]
+		//@todo delete state.deveices[uuid or IP (multiple windows could equal multiple devices with identical IPS)]
+		chant.forward(obj)//@todo (+evt listener & and a from:clientid prop to msg?)
+	}
+	else if (type==='get')
+	{
+		cons[from]=con
+		con.on('close',chant.disconect(from))
+		con.sendUTF(JSON.stringify({from,path,type:'set',val:self[type](path),}))
+	}
+	else con.sendUTF(`{"error":${type} is not a valid type"}`)
 }

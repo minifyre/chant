@@ -1,28 +1,26 @@
-import truth from './node_modules/truth/index.mjs'
-export default function chant(state={},addr=chant.address())
+export default function chant(updater,from=chant.address())
 {
-	const {addEventListener:on,removeEventListener:off,send}=chant.socket(addr)
-
-	await new Promise(function(res,rej)
+	const {error,send}=await new Promise(function(res,rej)
 	{
-		on('open',function connect()
+		const
+		socket=chant.socket(from),
+		{send}=socket
+
+		socket.onopen=function()
 		{
-			off('open',connect)
-			off('error',rej)
-			on('error',console.error)
-			on('message',function({data,origin:from})
-			{
-				truth.inject(state,Object.assign(JSON.parse(data),{from}))
-			})
+			socket.onerror=console.error
+			//@todo if get:'', then it needs to set everything
+			socket.onmessage=({data})=>updater(Object.assign(JSON.parse(data),{from}))
 			send(`{"type":"get"}`)
-			res()
-		})
-		on('error',rej)
+			res({send})
+		}
+		socket.onerror=error=>rej({error})
 	})
+	if(error) return console.error(error)
 
 	return function(act)
 	{
-		if(act.from!==addr) send(JSON.stringify(act))
+		if(act.from!==from) send(JSON.stringify(act))
 		return act
 	}
 }

@@ -28,3 +28,4 @@ export default function chant(state={},addr=chant.address())
 }
 chant.address=(url=location.href)=>url.split('/')[2]//[protocol,_,address]
 chant.socket=addr=>new WebSocket('ws://'+addr,'echo-protocol')
+chant.truth=truth

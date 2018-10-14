@@ -2,15 +2,14 @@ import ws from 'ws'
 const {assign,entries}=Object
 export default function chant(server,state,updater)
 {
+	let counter=0
 	const
 	cons={},
 	wss=new ws.Server({server})
 
 	wss.on('connection',function(con)//@todo add authentication & allowed origins
 	{
-		console.log(con.id)
-		//@todo use an id as one device could have multiple connections open
-		const from=''
+		const from=con.id=counter+=1
 		cons[from]=con
 		con.on('message',msg=>updater(assign(JSON.parse(msg),{from})))
 		//@todo need a way to determine if connection is lost

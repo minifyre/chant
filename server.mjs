@@ -13,10 +13,7 @@ export default function chant(server,state,updater)
 		cons[from]=con
 		con.on('message',msg=>updater(assign(JSON.parse(msg),{from})))
 		//@todo need a way to determine if connection is lost
-		con.on('close',function(ws)
-		{
-			delete cons[from]
-		})
+		con.on('close',()=>delete cons[from])
 		con.send(JSON.stringify({type:'set',path:[],value:state}))
 	})
 

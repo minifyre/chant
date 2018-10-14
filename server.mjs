@@ -1,46 +1,29 @@
-import websocket from './node_modules/websocket/index.js'
-import truth from './node_modules/truth/index.mjs'
-
-export default async function chant(state,httpServer)
+import ws from 'ws'
+const {assign,entries}=Object
+export default function chant(server,state,updater)
 {
 	const
 	cons={},
-	{state:write}=truth(state,chant.forward),
-	server=websocket.server({autoAcceptConnections:false,httpServer})
+	wss=new ws.Server({server})
 
-	return server.on('request',evt=>chant.req(evt,cons,write))
-}
-//@todo Make sure to only accept requests from an allowed origin
-chant.auth=async req=>true
-//@todo forward actions to other clients?
-chant.disconnect=(from,cons)=>delete cons[from]
-chant.forward=function(act,cons)//@todo handle get requests
-{
-	const msg=JSON.stringify(act)
-
-	Object
-	.entries(cons)
-	.filter(([id])=>id!==act.from)
-	.forEach(([_,con])=>chant.send(con,msg))
-}
-chant.msg=function(evt,state)
-{
-	if (evt.type!=='utf8') return//@todo +type==='binary' & msg.binaryData
-
-	const act=JSON.parse(evt.utf8Data)
-
-	if(act.type==='get'&&!act.path.length)
+	wss.on('connection',function(con)//@todo add authentication & allowed origins
 	{
+		//@todo use an id as one device could have multiple connections open
+		const from=con.connection.remoteAddress
 		cons[from]=con
-		con.on('close',chant.disconect(from))
-		chant.send(con,{from,path,type:'set',val:self[type](path)})
+		con.on('message',msg=>updater(assign(JSON.parse(msg),{from})))
+		//@todo need a way to determine if connection is lost
+		con.on('close',function(ws)
+		{
+			delete cons[from]
+		})
+		con.send(JSON.stringify({type:'set',path:[],value:state}))
+	})
+
+	return function forward(act)
+	{
+		const msg=JSON.stringify(act)
+
+		entries(cons).forEach(([id,con])=>id!==act.from&&con.send(msg))
 	}
-	else truth.inject(state,act)
 }
-chant.req=async function({accept,origin,reject},cons,state)
-{
-	if(await chant.auth(evt)) return reject()
-	const con=cons[origin]=accept('echo-protocol',origin)
-	con.on('message',evt=>chant.msg(evt,state))
-}
-chant.send=(con,msg)=>con.sendUTF(JSON.stringify(msg))

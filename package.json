@@ -9,6 +9,6 @@
 	},
 	"dependencies": {
 		"truth": "minifyre/truth",
-		"websocket": "~1.0.26"
+		"ws": "^6.1.0"
 	}
 }

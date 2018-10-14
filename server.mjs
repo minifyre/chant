@@ -8,8 +8,9 @@ export default function chant(server,state,updater)
 
 	wss.on('connection',function(con)//@todo add authentication & allowed origins
 	{
+		console.log(con.id)
 		//@todo use an id as one device could have multiple connections open
-		const from=con.connection.remoteAddress
+		const from=''
 		cons[from]=con
 		con.on('message',msg=>updater(assign(JSON.parse(msg),{from})))
 		//@todo need a way to determine if connection is lost

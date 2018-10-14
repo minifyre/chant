@@ -1,19 +1,24 @@
 const {assign}=Object
-export default function chant(updater,from=chant.address())
+export default async function chant(updater,from=chant.address())
 {
 	const
 	onmessage=({data})=>updater(assign(JSON.parse(data),{from})),
-	send=await new Promise(function(res,rej)
+	socket=chant.socket(from),
+	err=await new Promise(function(res,rej)
 	{//@todo simplify with promise chain or async compose function?
-		const onopen=({target})=>res(assign(target,{onerror:chant.error}).send)
-		assign(chant.socket(from),{onerror:rej,onopen,onmessage})
+		const onopen=function({target})
+		{
+			assign(target,{onerror:chant.error})
+			res()
+		}
+		assign(socket,{onerror:rej,onopen,onmessage})
 	})
 
-	if(send instanceof Error) return send
+	if(err) return chant.error(err)
 
 	return function(act)
 	{
-		if(act.from!==from) send(JSON.stringify(act))
+		if(act.from!==from) socket.send(JSON.stringify(act))
 		return act
 	}
 }

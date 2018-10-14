@@ -17,10 +17,8 @@ export default function chant(server,state,updater)
 		con.send(JSON.stringify({type:'set',path:[],value:state}))
 	})
 
-	return function forward(act)
+	return function(act,msg=JSON.stringify(act))
 	{
-		const msg=JSON.stringify(act)
-
 		entries(cons).forEach(([id,con])=>id!==act.from&&con.send(msg))
 	}
 }

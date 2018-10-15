@@ -1,26 +1,27 @@
 const {assign}=Object
-export default async function chant(updater,from=chant.address())
+export default async function chant(from=chant.address())
 {
 	const
-	onmessage=({data})=>updater(assign(JSON.parse(data),{from})),
+	receive=(cb,{data})=>cb(assign(JSON.parse(data),{from})),
 	socket=chant.socket(from),
-	err=await new Promise(function(res,rej)
-	{//@todo simplify with promise chain or async compose function?
-		const onopen=function({target})
-		{
-			assign(target,{onerror:chant.error})
-			res()
-		}
-		assign(socket,{onerror:rej,onopen,onmessage})
+	{data,err}=await new Promise(function(res,rej)
+	{
+		assign(socket,{onerror:rej,onmessage:evt=>receive(res,evt)})
 	})
+	.then(data=>({data}))
+	.catch(err=>({err}))
 
 	if(err) return chant.error(err)
 
-	return function(act)
+	return {state:data.value,send:function(update)
 	{
-		if(act.from!==from) socket.send(JSON.stringify(act))
-		return act
-	}
+		assign(socket,{onmessage:evt=>receive(update,evt)})
+		return function(act)
+		{
+			if(act.from!==from) socket.send(JSON.stringify(act))
+			return act
+		}
+	}}
 }
 chant.address=(url=location.href)=>url.split('/')[2]//[protocol,_,address]
 chant.error=console.error
